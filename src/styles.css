@@ -1,24 +1,24 @@
 :root {
-  /* Mirrormere: the still dark lake where Durin saw a crown of stars reflected. Tide's sister palette, leaning violet. */
-  --bg: #0a0e1f;
-  --surface: #121833b8;
-  --text: #e0daf2;
-  --muted: #aea7d0;
+  /* Mirrormere: the still dark lake where Durin saw a crown of stars reflected. Tide's sister palette, leaning violet, kept dusty and soft. */
+  --bg: #191922;
+  --surface: #1c1d2bb8;
+  --text: #d4cfe4;
+  --muted: #aaa6c1;
   --border: #ffffff14;
-  --accent: #b6a3ec;
-  --accent-hover: #c8b9f3;
-  --on-accent: #0f1428;
+  --accent: #b2a5d8;
+  --accent-hover: #c1b5e1;
+  --on-accent: #1a1e2d;
   --raised: #ffffff0f;
   --hover: #ffffff1a;
-  --warning: #e68aae;
-  --cream: #eae0cf;
-  --heading: #e2d9f7;
-  /* Mood from awful to great: dusk rose, through violet and periwinkle, to sea-glass green and gold. */
-  --mood-1: #e2738d;
-  --mood-2: #c48ad8;
-  --mood-3: #a4a9f2;
-  --mood-4: #8fd0cc;
-  --mood-5: #f0c35e;
+  --warning: #cf92aa;
+  --cream: #dcd4c6;
+  --heading: #d6cee9;
+  /* Mood from awful to great, kept dusty and low in saturation: rose, lilac, periwinkle, sea-glass and old gold. */
+  --mood-1: #ca919e;
+  --mood-2: #bb91ca;
+  --mood-3: #9195ca;
+  --mood-4: #91cac6;
+  --mood-5: #cab891;
   color-scheme: dark;
 }
 
@@ -30,7 +30,8 @@ body {
   color: var(--text);
   font: 15px/1.45 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
-/* A sunset sky fixed behind everything: night at the top, fading through blue and lilac to blush at the horizon. */
+/* A dusk sky fixed behind everything, sampled from a photo: near-black indigo at the top,
+   through slate blue and grey-mauve, to a faint dusty amber glow at the horizon. */
 body::before {
   content: '';
   position: fixed;
@@ -39,13 +40,16 @@ body::before {
   background: linear-gradient(
     to bottom,
     var(--bg) 0%,
-    #121734 35%,
-    #1f1f48 55%,
-    #3b3a72 70%,
-    #625f8f 82%,
-    #8c7fa3 90%,
-    #ad94a6 96%,
-    #bfa2a9 100%
+    #1e202f 30%,
+    #29293d 45%,
+    #323347 55%,
+    #3e3f52 65%,
+    #515060 75%,
+    #615f68 82%,
+    #716c6e 88%,
+    #837673 93%,
+    #957e72 97%,
+    #a3816e 100%
   );
 }
 h1, h2, .collapsible > summary, .settings summary, .journal-prompt {
@@ -152,7 +156,7 @@ textarea, input:not([type='file']), select {
 }
 textarea { width: 100%; resize: vertical; display: block; }
 textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); background: var(--hover); }
-select option, select optgroup { background: #131a33; color: var(--text); }
+select option, select optgroup { background: #1c1d2b; color: var(--text); }
 .time-input { margin-left: auto; padding: 2px 6px; font-size: 0.85rem; text-transform: none; letter-spacing: 0; color: var(--text); }
 
 button { cursor: pointer; }
@@ -223,12 +227,12 @@ th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
 .import-messages { font-size: 0.85rem; color: var(--muted); }
 
 /* The footer sits low on the page, over the blush end of the sky. */
-footer { color: #2e2440; font-size: 0.8rem; text-align: center; }
+footer { color: #1f1b26; font-size: 0.8rem; text-align: center; }
 
 /* Tide's starfield, fading out as the sky brightens towards the horizon. */
 .starfield {
   position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-  mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 85%);
+  mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 88%);
 }
 .star {
   position: absolute;

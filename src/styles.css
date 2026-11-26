@@ -1,0 +1,248 @@
+:root {
+  /* Mirrormere: the still dark lake where Durin saw a crown of stars reflected. Tide's sister palette, leaning violet. */
+  --bg: #0a0e1f;
+  --surface: #121833b8;
+  --text: #e0daf2;
+  --muted: #aea7d0;
+  --border: #ffffff14;
+  --accent: #b6a3ec;
+  --accent-hover: #c8b9f3;
+  --on-accent: #0f1428;
+  --raised: #ffffff0f;
+  --hover: #ffffff1a;
+  --warning: #e68aae;
+  --cream: #eae0cf;
+  --heading: #e2d9f7;
+  /* Mood from awful to great: dusk rose, through violet and periwinkle, to sea-glass green and gold. */
+  --mood-1: #e2738d;
+  --mood-2: #c48ad8;
+  --mood-3: #a4a9f2;
+  --mood-4: #8fd0cc;
+  --mood-5: #f0c35e;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+  font: 15px/1.45 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+/* A sunset sky fixed behind everything: night at the top, fading through blue and lilac to blush at the horizon. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: linear-gradient(
+    to bottom,
+    var(--bg) 0%,
+    #121734 35%,
+    #1f1f48 55%,
+    #3b3a72 70%,
+    #625f8f 82%,
+    #8c7fa3 90%,
+    #ad94a6 96%,
+    #bfa2a9 100%
+  );
+}
+h1, h2, .collapsible > summary, .settings summary, .journal-prompt {
+  font-family: 'Lora Variable', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.1;
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+h1 { font-size: 40px; letter-spacing: -0.01em; margin: 0; color: var(--heading); }
+.wordmark { display: block; }
+h2 { font-size: 24px; margin: 0 0 12px; }
+h3 { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; margin: 18px 0 8px; }
+h3:first-of-type { margin-top: 0; }
+.heading-date { color: var(--muted); font-size: 0.7em; }
+
+.app { max-width: 1040px; margin: 0 auto; padding: 20px 16px 40px; display: grid; gap: 16px; }
+/* Grid items may shrink below their content, so wide content scrolls inside its card instead of the page. */
+.app > *, .layout > * { min-width: 0; }
+section, .settings, .collapsible {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: inset 0 1px 0 #ffffff12, 0 8px 30px #05081a66;
+}
+.warning { color: var(--warning); margin: 4px 0 0; }
+.empty { margin: 0; color: var(--muted); }
+.hint { color: var(--muted); font-size: 0.85rem; }
+
+/* Mood colours, shared by every place that shows a mood. */
+.mood-1 { --mood: var(--mood-1); }
+.mood-2 { --mood: var(--mood-2); }
+.mood-3 { --mood: var(--mood-3); }
+.mood-4 { --mood: var(--mood-4); }
+.mood-5 { --mood: var(--mood-5); }
+.mood-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--mood); flex: none; }
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; }
+.stat { display: flex; flex-direction: column; gap: 2px; padding-left: 10px; border-left: 3px solid var(--mood, var(--border)); }
+.stat.habits { border-color: var(--accent); }
+.stat .label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.stat .value { font-size: 1.2rem; font-weight: 600; }
+.stat .value::first-letter { text-transform: uppercase; }
+.stat .detail { font-size: 0.85rem; color: var(--muted); }
+
+.layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: 'calendar day' 'journal day';
+  gap: 16px;
+  align-items: start;
+}
+.layout .calendar { grid-area: calendar; }
+.layout .day-panel { grid-area: day; }
+.layout .journal { grid-area: journal; }
+@media (max-width: 760px) {
+  .layout { grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: 'calendar' 'day' 'journal'; }
+}
+
+.calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.calendar-nav h2 { margin: 0; }
+.calendar-nav button { border: 1px solid var(--border); background: var(--raised); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; font-size: 1.2rem; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.weekday { text-align: center; font-size: 0.75rem; color: var(--muted); padding-bottom: 4px; }
+.day {
+  aspect-ratio: 1; min-width: 0; border: 1px solid transparent; border-radius: 8px; background: none;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 2px;
+}
+.day:hover { background-color: var(--hover); }
+.day[class*='mood-'] { background: var(--raised); box-shadow: inset 0 -4px 0 var(--mood); }
+.day[class*='mood-']:hover { background: var(--hover); }
+.day.is-future { opacity: 0.45; }
+.day .number { font-size: 0.9rem; }
+.day .marks { display: flex; gap: 3px; align-items: center; height: 10px; font-size: 0.6rem; line-height: 1; }
+.day.is-today .number { text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
+.day.is-selected { border-color: var(--accent); border-width: 2px; }
+.habit-mark { color: var(--accent); font-weight: 700; letter-spacing: -1px; }
+.journal-mark { width: 5px; height: 5px; border-radius: 50%; background: var(--cream); opacity: 0.8; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; font-size: 0.8rem; color: var(--muted); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: var(--mood); }
+
+fieldset { border: none; padding: 0; margin: 0 0 14px; }
+legend { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; width: 100%; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--border); background: none; border-radius: 999px; padding: 4px 12px;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+}
+.chip.small { padding: 2px 10px; font-size: 0.9rem; }
+.chip:hover { background: var(--hover); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.chip.on:hover { background: var(--accent-hover); }
+.chip.mood-chip.on { background: var(--mood); border-color: var(--mood); }
+.chip.mood-chip.on .mood-dot { background: var(--on-accent); }
+.chip.static { cursor: default; }
+.chip.static:hover { background: none; }
+.chip .count { color: var(--muted); font-size: 0.8rem; }
+.day-panel .habits { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--border); }
+.habit-check { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1px solid currentColor; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+
+textarea, input:not([type='file']), select {
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; background: var(--raised);
+}
+textarea { width: 100%; resize: vertical; display: block; }
+textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); background: var(--hover); }
+select option, select optgroup { background: #131a33; color: var(--text); }
+.time-input { margin-left: auto; padding: 2px 6px; font-size: 0.85rem; text-transform: none; letter-spacing: 0; color: var(--text); }
+
+button { cursor: pointer; }
+.form-actions, .data-actions { display: flex; gap: 8px; margin-top: 8px; }
+.form-actions button, .data-actions button, .data-actions .button, .settings-group button, .journal-topic button {
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; background: var(--raised);
+}
+.form-actions button:hover, .data-actions button:hover, .settings-group button:hover:not(:disabled), .journal-topic button:hover:not(:disabled) { background: var(--hover); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+button:disabled { opacity: 0.55; cursor: default; }
+/* A primary button waiting for input stays readable: an outline instead of a faded fill. */
+button.primary:disabled { opacity: 0.8; background: transparent; color: var(--accent); }
+
+.entry-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 4px; }
+.check-in { display: flex; align-items: flex-start; gap: 4px; border-radius: 8px; }
+.check-in.is-editing { outline: 1px solid var(--accent); }
+.entry-body {
+  flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; text-align: left;
+  background: var(--raised); border: none; border-radius: 8px; padding: 6px 10px;
+}
+.entry-body:hover { background: var(--hover); }
+.entry-time { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.check-in-mood { font-weight: 600; }
+.check-in-emotions { color: var(--muted); font-size: 0.85rem; }
+.check-in-note { flex-basis: 100%; font-size: 0.9rem; }
+.remove { background: none; border: none; color: var(--muted); font-size: 1.2rem; line-height: 1; padding: 6px; border-radius: 6px; }
+.remove:hover { color: var(--text); background: var(--hover); }
+
+.journal-entries { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 12px; }
+.journal-entries li { border-left: 2px solid var(--border); padding-left: 12px; }
+.journal-entries li.is-editing { border-color: var(--accent); }
+.journal-entry-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.journal-entry-actions { margin-left: auto; display: flex; gap: 4px; }
+.journal-entry-actions button { background: none; border: none; color: var(--muted); font-size: 0.8rem; padding: 2px 6px; border-radius: 6px; }
+.journal-entry-actions button:hover { color: var(--text); background: var(--hover); }
+.journal-prompt { font-style: italic; color: var(--heading); font-size: 1.05rem; margin: 0; }
+.journal-composer .journal-prompt { margin: 10px 0 8px; }
+.journal-text { margin: 4px 0 0; white-space: pre-wrap; }
+.journal-topic { display: flex; gap: 8px; }
+.journal-topic select { flex: 1; min-width: 0; }
+.journal-composer textarea { margin-top: 8px; }
+
+.collapsible > summary, .settings summary { cursor: pointer; font-size: 24px; }
+.collapsible[open] > summary, .settings[open] > summary { margin-bottom: 12px; }
+.subheading { margin: -4px 0 10px; color: var(--muted); font-size: 0.85rem; }
+
+.patterns .readout { margin: 0 0 6px; font-size: 0.85rem; color: var(--muted); min-height: 1.2em; }
+.pattern-grid { display: grid; gap: 2px; align-items: center; overflow-x: auto; }
+.pattern-label { padding-right: 10px; font-size: 0.85rem; white-space: nowrap; }
+.pattern-cell { height: 16px; min-width: 0; border-radius: 2px; background: var(--raised); border: none; padding: 0; }
+.pattern-cell[class*='mood-'] { background: var(--mood); }
+.pattern-cell.is-done { background: var(--accent); }
+.pattern-cell.is-future { background: none; }
+.pattern-cell:hover, .pattern-cell:focus-visible { outline: 1px solid var(--text); }
+.pattern-tick { font-size: 0.7rem; color: var(--muted); white-space: nowrap; overflow: visible; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+.comparison { display: block; overflow-x: auto; }
+
+.settings-group + .settings-group { margin-top: 20px; }
+.habit-setting, .prompt-setting, .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.habit-setting input:first-child, .add-row input:first-child:not(.wide) { width: 160px; }
+.wide { flex: 1; min-width: 180px; }
+.habit-setting.is-archived input { opacity: 0.5; }
+.import-messages { font-size: 0.85rem; color: var(--muted); }
+
+/* The footer sits low on the page, over the blush end of the sky. */
+footer { color: #2e2440; font-size: 0.8rem; text-align: center; }
+
+/* Tide's starfield, fading out as the sky brightens towards the horizon. */
+.starfield {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 85%);
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--cream);
+  opacity: var(--star-opacity);
+  animation-name: twinkle;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: calc(var(--star-opacity) * 0.3); transform: scale(0.8); }
+  50% { opacity: var(--star-opacity); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .star { animation: none; }
+}

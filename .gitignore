@@ -1,0 +1,4 @@
+node_modules
+dist
+# Raw Finch exports stay on this machine; only what you pick is imported into the app.
+/finch-export/

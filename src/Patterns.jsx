@@ -1,23 +1,39 @@
 import { useState } from 'react';
-import { averageMood, moodLabel } from './days.js';
+import { moodLabel } from './days.js';
 import { formatShort } from './dates.js';
-import { MIN_DAYS_TO_COMPARE, compareMoodByHabit, countEmotions, recentWeekDates } from './insights.js';
+import {
+  MIN_DAYS_TO_COMPARE,
+  TIMEFRAMES,
+  averageMoodOn,
+  compareMoodByHabit,
+  countEmotions,
+  periodsEnding,
+  timeframeDayCount,
+} from './insights.js';
 
-const WEEKS_SHOWN = 12;
-const EMOTION_WINDOW_DAYS = 30;
+// Roughly how many date labels fit under the grid.
+const TICKS_SHOWN = 6;
 
 function plural(count, word) {
   return `${count} ${word}${count === 1 ? '' : 's'}`;
 }
 
+function describePeriod(dates) {
+  return dates.length === 1 ? formatShort(dates[0]) : `${formatShort(dates[0])} - ${formatShort(dates.at(-1))}`;
+}
+
 export default function Patterns({ data, today, onSelect }) {
   const [hovered, setHovered] = useState(null);
+  const [timeframeId, setTimeframeId] = useState('3-months');
   const { days, habits } = data;
-  const dates = recentWeekDates(today, WEEKS_SHOWN);
+  const timeframe = TIMEFRAMES.find((candidate) => candidate.id === timeframeId);
+  const dayCount = timeframeDayCount(timeframe, days, today);
+  const periods = periodsEnding(today, dayCount);
   const activeHabits = habits.filter((habit) => !habit.archived);
-  const comparisons = compareMoodByHabit(days, habits);
-  const emotions = countEmotions(days, today, EMOTION_WINDOW_DAYS);
+  const comparisons = compareMoodByHabit(days, habits, periods[0][0]);
+  const emotions = countEmotions(days, today, dayCount);
   const hasAnything = Object.keys(days).length > 0;
+  const tickEvery = Math.ceil(periods.length / TICKS_SHOWN);
 
   return (
     <details className="patterns collapsible" open>
@@ -26,30 +42,41 @@ export default function Patterns({ data, today, onSelect }) {
         <p className="empty">Check in and tick off habits for a while, and patterns will show here.</p>
       ) : (
         <>
-          <h3>Last {WEEKS_SHOWN} weeks</h3>
+          <div className="chips timeframes">
+            {TIMEFRAMES.map((candidate) => (
+              <button
+                key={candidate.id}
+                className={`chip small ${candidate.id === timeframeId ? 'on' : ''}`}
+                aria-pressed={candidate.id === timeframeId}
+                onClick={() => setTimeframeId(candidate.id)}
+              >
+                {candidate.label}
+              </button>
+            ))}
+          </div>
           <p className="readout">{hovered ?? ' '}</p>
-          <div className="pattern-grid" style={{ gridTemplateColumns: `max-content repeat(${dates.length}, minmax(4px, 1fr))` }}>
+          <div className="pattern-grid" style={{ gridTemplateColumns: `max-content repeat(${periods.length}, minmax(4px, 1fr))` }}>
             <span className="pattern-label">Mood</span>
-            {dates.map((date) => {
-              const mood = averageMood(days[date]);
-              const description = `${formatShort(date)} · ${mood === null ? 'no check-ins' : `${moodLabel(Math.round(mood))} (${mood.toFixed(1)})`}`;
+            {periods.map((dates) => {
+              const mood = averageMoodOn(days, dates);
+              const description = `${describePeriod(dates)} · ${mood === null ? 'no check-ins' : `${moodLabel(Math.round(mood))} (${mood.toFixed(1)})`}`;
               return (
-                <PatternCell key={date} date={date} today={today} className={mood !== null ? `mood-${Math.round(mood)}` : ''} description={description} onHover={setHovered} onSelect={onSelect} />
+                <PatternCell key={dates[0]} dates={dates} className={mood !== null ? `mood-${Math.round(mood)}` : ''} description={description} onHover={setHovered} onSelect={onSelect} />
               );
             })}
             {activeHabits.map((habit) => (
-              <HabitRow key={habit.id} habit={habit} dates={dates} days={days} today={today} onHover={setHovered} onSelect={onSelect} />
+              <HabitRow key={habit.id} habit={habit} periods={periods} days={days} onHover={setHovered} onSelect={onSelect} />
             ))}
             <span />
-            {dates.map((date, i) => (
-              <span key={date} className="pattern-tick">{i % 7 === 0 ? formatShort(date) : ''}</span>
+            {periods.map((dates, i) => (
+              <span key={dates[0]} className="pattern-tick">{i % tickEvery === 0 ? formatShort(dates[0]) : ''}</span>
             ))}
           </div>
 
           {comparisons.length > 0 && (
             <>
               <h3>Mood and habits</h3>
-              <p className="subheading">Average mood on days you did each habit versus days you didn't, since you first did it.</p>
+              <p className="subheading">Average mood on days you did each habit versus days you didn't, since you first did it in this timeframe.</p>
               <table className="comparison">
                 <thead>
                   <tr><th>Habit</th><th>Done</th><th>Mood when done</th><th>Mood when not</th><th /></tr>
@@ -63,7 +90,7 @@ export default function Patterns({ data, today, onSelect }) {
             </>
           )}
 
-          <h3>Emotions in the last {EMOTION_WINDOW_DAYS} days</h3>
+          <h3>Emotions</h3>
           {emotions.length === 0 ? (
             <p className="empty">No emotions picked in check-ins yet.</p>
           ) : (
@@ -81,19 +108,22 @@ export default function Patterns({ data, today, onSelect }) {
   );
 }
 
-function HabitRow({ habit, dates, days, today, onHover, onSelect }) {
+function HabitRow({ habit, periods, days, onHover, onSelect }) {
   return (
     <>
       <span className="pattern-label">{habit.name}</span>
-      {dates.map((date) => {
-        const isDone = days[date]?.habitsDone.includes(habit.id) ?? false;
+      {periods.map((dates) => {
+        const doneDayCount = dates.filter((date) => days[date]?.habitsDone.includes(habit.id)).length;
+        const doneText = dates.length === 1
+          ? (doneDayCount === 1 ? 'done' : 'not done')
+          : `done ${doneDayCount} of ${dates.length} days`;
         return (
           <PatternCell
-            key={date}
-            date={date}
-            today={today}
-            className={isDone ? 'is-done' : ''}
-            description={`${formatShort(date)} · ${habit.name} ${isDone ? 'done' : 'not done'}`}
+            key={dates[0]}
+            dates={dates}
+            className={doneDayCount > 0 ? 'is-done' : ''}
+            style={{ '--done-share': doneDayCount / dates.length }}
+            description={`${describePeriod(dates)} · ${habit.name} ${doneText}`}
             onHover={onHover}
             onSelect={onSelect}
           />
@@ -103,17 +133,18 @@ function HabitRow({ habit, dates, days, today, onHover, onSelect }) {
   );
 }
 
-function PatternCell({ date, today, className, description, onHover, onSelect }) {
-  if (date > today) return <span className="pattern-cell is-future" />;
+// One period in the grid; selecting it opens its most recent day.
+function PatternCell({ dates, className, style, description, onHover, onSelect }) {
   return (
     <button
       className={`pattern-cell ${className}`}
+      style={style}
       aria-label={description}
       onMouseEnter={() => onHover(description)}
       onMouseLeave={() => onHover(null)}
       onFocus={() => onHover(description)}
       onBlur={() => onHover(null)}
-      onClick={() => onSelect(date)}
+      onClick={() => onSelect(dates.at(-1))}
     />
   );
 }

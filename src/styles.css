@@ -189,7 +189,8 @@ button.primary:disabled { opacity: 0.8; background: transparent; color: var(--ac
 
 .entry-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 4px; }
 .daily-log h2 { margin-top: 0; }
-.daily-log .entry-list { margin: 0; }
+/* About six closed entries show; the rest scroll. */
+.daily-log .entry-list { margin: 0; position: relative; max-height: calc(6 * 2.25rem + 5 * 4px); overflow-y: auto; overscroll-behavior: contain; }
 /* A habit done is a quiet line between the check-ins, aligned with their times. */
 .habit-done { display: grid; border-radius: 8px; }
 .habit-done .entry-body { background: none; color: var(--muted); }

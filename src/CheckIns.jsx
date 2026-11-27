@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MOODS, PAST_DAY_TIME, countPicks, findOptionByName, moodLabel, newId, normaliseOptionName, sortByTimeOfDay, upsertById } from './days.js';
 import { formatLong, nowTime } from './dates.js';
 
@@ -69,6 +69,36 @@ export function useCheckInDraft(date, isToday, checkIns, dayStartTime, onChange)
 
 // The day's check-ins and habits done, in order by time. A check-in is one compact line; opening it shows its whole note
 // and lets it be edited or deleted. Opening a habit done lets its time be changed; it is unticked under Habits.
+function entryKey(entry) {
+  return entry.habit ? `habit-${entry.habitId}` : entry.id;
+}
+
+// The log shows a few entries and scrolls the rest. It opens on the day's latest entries,
+// and an entry added while it is shown is scrolled into sight (not the page, just the list).
+function useScrollToNewEntry(keys) {
+  const entryListRef = useRef(null);
+  const shownKeys = useRef(null);
+  const keysText = keys.join(' ');
+  useEffect(() => {
+    const entryList = entryListRef.current;
+    const previousKeys = shownKeys.current;
+    shownKeys.current = keys;
+    if (!entryList) return;
+    if (previousKeys === null) {
+      entryList.scrollTop = entryList.scrollHeight;
+      return;
+    }
+    const addedIndex = keys.findIndex((key) => !previousKeys.includes(key));
+    if (addedIndex === -1) return;
+    const added = entryList.children[addedIndex];
+    const addedTop = added.offsetTop;
+    if (addedTop < entryList.scrollTop) entryList.scrollTop = addedTop;
+    else if (addedTop + added.offsetHeight > entryList.scrollTop + entryList.clientHeight)
+      entryList.scrollTop = addedTop + added.offsetHeight - entryList.clientHeight;
+  }, [keysText]);
+  return entryListRef;
+}
+
 export function DailyLog({ day, habits, emotions, activities, dayStartTime, checkInDraft, onHabitsDoneChange }) {
   const [openIds, setOpenIds] = useState([]);
   const toggle = (id) => setOpenIds(openIds.includes(id) ? openIds.filter((openId) => openId !== id) : [...openIds, id]);
@@ -79,6 +109,7 @@ export function DailyLog({ day, habits, emotions, activities, dayStartTime, chec
   const entries = sortByTimeOfDay([...day.checkIns, ...habitsDone], dayStartTime);
   const changeHabitTime = (habitId, time) =>
     onHabitsDoneChange(day.habitsDone.map((done) => (done.habitId === habitId ? { ...done, time } : done)));
+  const entryListRef = useScrollToNewEntry(entries.map(entryKey));
 
   return (
     <section className="daily-log">
@@ -86,10 +117,10 @@ export function DailyLog({ day, habits, emotions, activities, dayStartTime, chec
       {entries.length === 0 ? (
         <p className="empty">Nothing logged on this day yet.</p>
       ) : (
-        <ul className="entry-list">
+        <ul className="entry-list" ref={entryListRef}>
           {entries.map((entry) => {
             if (entry.habit) {
-              const openId = `habit-${entry.habitId}`;
+              const openId = entryKey(entry);
               return (
                 <HabitDoneEntry
                   key={openId}

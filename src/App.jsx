@@ -57,6 +57,7 @@ export default function App() {
       <main className="layout">
         <Calendar days={data.days} today={today} selectedDate={selectedDate} onSelect={setSelectedDate} />
         <DailyLog
+          key={selectedDate}
           day={selectedDay}
           habits={data.habits}
           emotions={data.emotions}

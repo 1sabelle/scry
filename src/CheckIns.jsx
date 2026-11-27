@@ -9,11 +9,14 @@ function blankCheckIn(isToday) {
   return { id: null, time: isToday ? nowTime() : PAST_DAY_TIME, mood: null, emotions: [], activities: [], note: '' };
 }
 
-// Emotions and activities are added and edited under Settings.
-export default function CheckIns({ date, isToday, checkIns, emotions, activities, dayStartTime, onChange }) {
-  const [draft, setDraft] = useState(() => blankCheckIn(isToday));
+// The check-in being written or edited on `date`, shared by the list (to pick one to edit) and the form.
+// Switching to another day starts a blank one.
+export function useCheckInDraft(date, isToday, checkIns, dayStartTime, onChange) {
+  const [drafted, setDrafted] = useState(() => ({ date, checkIn: blankCheckIn(isToday) }));
+  if (drafted.date !== date) setDrafted({ date, checkIn: blankCheckIn(isToday) });
+  const draft = drafted.checkIn;
+  const setDraft = (checkIn) => setDrafted({ date, checkIn });
   const isEditing = draft.id !== null;
-  const update = (change) => setDraft({ ...draft, ...change });
   const hasUnsavedChanges = isEditing
     ? JSON.stringify(draft) !== JSON.stringify(checkIns.find((checkIn) => checkIn.id === draft.id))
     : draft.mood !== null || draft.emotions.length > 0 || draft.activities.length > 0 || draft.note.trim() !== '';
@@ -26,39 +29,72 @@ export default function CheckIns({ date, isToday, checkIns, emotions, activities
     return () => window.removeEventListener('beforeunload', warn);
   }, [hasUnsavedChanges]);
 
-  function save() {
-    onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }, dayStartTime));
-    setDraft(blankCheckIn(isToday));
-  }
+  return {
+    draft,
+    isEditing,
+    update: (change) => setDraft({ ...draft, ...change }),
+    edit: setDraft,
+    cancel: () => setDraft(blankCheckIn(isToday)),
+    save() {
+      onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }, dayStartTime));
+      setDraft(blankCheckIn(isToday));
+    },
+    remove(id) {
+      onChange(checkIns.filter((checkIn) => checkIn.id !== id));
+      if (draft.id === id) setDraft(blankCheckIn(isToday));
+    },
+  };
+}
 
-  function remove(id) {
-    onChange(checkIns.filter((checkIn) => checkIn.id !== id));
-    if (draft.id === id) setDraft(blankCheckIn(isToday));
-  }
+// One compact line per check-in; opening one shows its whole note and lets it be edited or deleted.
+export function CheckInList({ checkIns, emotions, activities, checkInDraft }) {
+  const [openIds, setOpenIds] = useState([]);
+  const toggle = (id) => setOpenIds(openIds.includes(id) ? openIds.filter((openId) => openId !== id) : [...openIds, id]);
+
+  return (
+    <section className="check-in-list">
+      <h2>Check-ins</h2>
+      {checkIns.length === 0 ? (
+        <p className="empty">No check-ins on this day yet.</p>
+      ) : (
+        <ul className="entry-list">
+          {checkIns.map((checkIn) => {
+            const isOpen = openIds.includes(checkIn.id);
+            const isEditing = checkIn.id === checkInDraft.draft.id;
+            return (
+              <li key={checkIn.id} className={`check-in ${isOpen ? 'is-open' : ''} ${isEditing ? 'is-editing' : ''}`}>
+                <button className="entry-body" onClick={() => toggle(checkIn.id)} aria-expanded={isOpen}>
+                  <span className="entry-time">{checkIn.time}</span>
+                  <span className={`mood-dot mood-${checkIn.mood}`} />
+                  <span className="check-in-mood">{moodLabel(checkIn.mood)}</span>
+                  <PickedNames checkIn={checkIn} emotions={emotions} activities={activities} />
+                  {checkIn.note && <span className="check-in-note">{checkIn.note}</span>}
+                </button>
+                {isOpen && (
+                  <div className="check-in-actions">
+                    <button onClick={() => checkInDraft.edit(checkIn)} disabled={isEditing}>{isEditing ? 'Editing' : 'Edit'}</button>
+                    <button onClick={() => checkInDraft.remove(checkIn.id)}>Delete</button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+// Emotions and activities are added and edited under Settings.
+export function CheckInForm({ date, emotions, activities, checkInDraft }) {
+  const { draft, isEditing, update, save, cancel } = checkInDraft;
 
   return (
     <div className="check-ins">
       <h2>{formatLong(date)}</h2>
-      {checkIns.length > 0 && (
-        <ul className="entry-list">
-          {checkIns.map((checkIn) => (
-            <li key={checkIn.id} className={`check-in ${checkIn.id === draft.id ? 'is-editing' : ''}`}>
-              <button className="entry-body" onClick={() => setDraft(checkIn)} aria-label={`Edit the ${checkIn.time} check-in`}>
-                <span className="entry-time">{checkIn.time}</span>
-                <span className={`mood-dot mood-${checkIn.mood}`} />
-                <span className="check-in-mood">{moodLabel(checkIn.mood)}</span>
-                <PickedNames checkIn={checkIn} emotions={emotions} activities={activities} />
-                {checkIn.note && <span className="check-in-note">{checkIn.note}</span>}
-              </button>
-              <button className="remove" onClick={() => remove(checkIn.id)} aria-label={`Delete the ${checkIn.time} check-in`}>×</button>
-            </li>
-          ))}
-        </ul>
-      )}
-
       <fieldset>
         <legend>
-          {isEditing ? 'Edit check-in' : 'How are you feeling?'}
+          {isEditing ? `Edit the ${draft.time} check-in` : 'How are you feeling?'}
           <input type="time" className="time-input" value={draft.time} onChange={(e) => e.target.value && update({ time: e.target.value })} aria-label="Time" />
         </legend>
         <div className="chips">
@@ -84,7 +120,7 @@ export default function CheckIns({ date, isToday, checkIns, emotions, activities
         <button className="primary" disabled={draft.mood === null} onClick={save}>
           {isEditing ? 'Save check-in' : 'Check in'}
         </button>
-        {isEditing && <button onClick={() => setDraft(blankCheckIn(isToday))}>Cancel</button>}
+        {isEditing && <button onClick={cancel}>Cancel</button>}
       </div>
     </div>
   );

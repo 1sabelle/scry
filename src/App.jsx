@@ -4,7 +4,7 @@ import { todayIso } from './dates.js';
 import { loadData, saveData } from './storage.js';
 import Summary from './Summary.jsx';
 import Calendar from './Calendar.jsx';
-import CheckIns from './CheckIns.jsx';
+import { CheckInForm, CheckInList, useCheckInDraft } from './CheckIns.jsx';
 import DailyLines from './DailyLines.jsx';
 import Habits from './Habits.jsx';
 import Patterns from './Patterns.jsx';
@@ -18,6 +18,10 @@ export default function App() {
   const [saveFailed, setSaveFailed] = useState(false);
   const today = todayIso(data.dayStartTime);
   const selectedDay = data.days[selectedDate] ?? EMPTY_DAY;
+  const isToday = selectedDate === today;
+  const checkInDraft = useCheckInDraft(selectedDate, isToday, selectedDay.checkIns, data.dayStartTime, (checkIns) =>
+    updateSelectedDay({ checkIns }),
+  );
 
   useEffect(() => {
     setSaveFailed(!saveData(data));
@@ -44,31 +48,23 @@ export default function App() {
         {saveFailed && <p className="warning">Could not save to browser storage. Export your data to keep it.</p>}
       </header>
       <Summary data={data} today={today} />
+      <Search days={data.days} onSelect={setSelectedDate} />
       <main className="layout">
         <Calendar days={data.days} today={today} selectedDate={selectedDate} onSelect={setSelectedDate} />
+        <CheckInList checkIns={selectedDay.checkIns} emotions={data.emotions} activities={data.activities} checkInDraft={checkInDraft} />
         <section className="day-panel">
-          <CheckIns
-            key={`check-ins-${selectedDate}`}
-            date={selectedDate}
-            isToday={selectedDate === today}
-            checkIns={selectedDay.checkIns}
-            emotions={data.emotions}
-            activities={data.activities}
-            dayStartTime={data.dayStartTime}
-            onChange={(checkIns) => updateSelectedDay({ checkIns })}
-          />
+          <CheckInForm date={selectedDate} emotions={data.emotions} activities={data.activities} checkInDraft={checkInDraft} />
           <DailyLines day={selectedDay} onChange={updateSelectedDay} />
           <Habits
             habits={data.habits}
             days={data.days}
             today={today}
-            isToday={selectedDate === today}
+            isToday={isToday}
             habitsDone={selectedDay.habitsDone}
             onChange={(habitsDone) => updateSelectedDay({ habitsDone })}
           />
         </section>
       </main>
-      <Search days={data.days} onSelect={setSelectedDate} />
       <Patterns data={data} today={today} onSelect={setSelectedDate} />
       <Settings data={data} onReplace={setData} />
       <footer>Everything stays in this browser. Nothing is sent anywhere.</footer>

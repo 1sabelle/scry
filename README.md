@@ -19,7 +19,7 @@ peeking. Your data never leaves your device unless you export it yourself.
 - **Grateful for and daily success**: one optional line each per day
 - **Habits**: your own list, ticked off per day, with a streak; archive one to keep its history
 - **Streaks**: your check-in streak and the next milestone
-- **Patterns**: the last 12 weeks at a glance, mood on days with and without each habit, and your most common emotions
+- **Patterns**: the last 12 weeks at a glance (middling weeks in grey), mood on days with and without each habit, and your most common emotions
 - **Start of day**: a late night still counts as the day before, until the time you choose
 
 ## Run it yourself

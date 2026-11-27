@@ -4,9 +4,10 @@ import { formatShort } from './dates.js';
 import {
   MIN_DAYS_TO_COMPARE,
   TIMEFRAMES,
-  averageMoodOn,
   compareMoodByHabit,
   countEmotions,
+  isNeutralMood,
+  medianMoodOn,
   periodsEnding,
   timeframeDayCount,
 } from './insights.js';
@@ -16,6 +17,17 @@ const TICKS_SHOWN = 6;
 
 function plural(count, word) {
   return `${count} ${word}${count === 1 ? '' : 's'}`;
+}
+
+// Middling periods are grey rather than coloured, so the good and bad stretches stand out.
+function moodClass(medianMood) {
+  if (medianMood === null) return '';
+  return isNeutralMood(medianMood) ? 'mood-neutral' : `mood-${Math.round(medianMood)}`;
+}
+
+function describeMedianMood(medianMood) {
+  if (medianMood === null) return 'no check-ins';
+  return `${isNeutralMood(medianMood) ? 'neutral' : moodLabel(Math.round(medianMood))} (median ${medianMood})`;
 }
 
 function describePeriod(dates) {
@@ -58,10 +70,9 @@ export default function Patterns({ data, today, onSelect }) {
           <div className="pattern-grid" style={{ gridTemplateColumns: `max-content repeat(${periods.length}, minmax(4px, 1fr))` }}>
             <span className="pattern-label">Mood</span>
             {periods.map((dates) => {
-              const mood = averageMoodOn(days, dates);
-              const description = `${describePeriod(dates)} · ${mood === null ? 'no check-ins' : `${moodLabel(Math.round(mood))} (${mood.toFixed(1)})`}`;
+              const mood = medianMoodOn(days, dates);
               return (
-                <PatternCell key={dates[0]} dates={dates} className={mood !== null ? `mood-${Math.round(mood)}` : ''} description={description} onHover={setHovered} onSelect={onSelect} />
+                <PatternCell key={dates[0]} dates={dates} className={moodClass(mood)} description={`${describePeriod(dates)} · ${describeMedianMood(mood)}`} onHover={setHovered} onSelect={onSelect} />
               );
             })}
             {activeHabits.map((habit) => (

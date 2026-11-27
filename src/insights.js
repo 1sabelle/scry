@@ -34,9 +34,18 @@ export function periodsEnding(today, dayCount) {
   );
 }
 
-// The average mood across all check-ins on the given dates, or null.
-export function averageMoodOn(days, dates) {
-  return mean(dates.flatMap((date) => (days[date]?.checkIns ?? []).map((checkIn) => checkIn.mood)));
+// The median mood across all check-ins on the given dates, or null. The median keeps one
+// awful check-in from dragging a good stretch into the middle.
+export function medianMoodOn(days, dates) {
+  const moods = dates.flatMap((date) => (days[date]?.checkIns ?? []).map((checkIn) => checkIn.mood)).sort((a, b) => a - b);
+  if (moods.length === 0) return null;
+  const middle = Math.floor(moods.length / 2);
+  return moods.length % 2 === 1 ? moods[middle] : (moods[middle - 1] + moods[middle]) / 2;
+}
+
+// A median strictly between low and good is neutral: shown grey, so the good and bad stretches stand out.
+export function isNeutralMood(medianMood) {
+  return medianMood > 2 && medianMood < 4;
 }
 
 // How many days in a row, ending today, `isKept(day)` holds for. A today that isn't kept yet

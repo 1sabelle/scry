@@ -83,6 +83,7 @@ section, .settings, .collapsible {
 .mood-3 { --mood: var(--mood-3); }
 .mood-4 { --mood: var(--mood-4); }
 .mood-5 { --mood: var(--mood-5); }
+.mood-neutral { --mood: color-mix(in srgb, var(--muted) 40%, transparent); }
 .mood-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--mood); flex: none; }
 
 .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; }

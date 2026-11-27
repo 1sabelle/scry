@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   TIMEFRAMES,
-  averageMoodOn,
   averageMoodOver,
   compareMoodByHabit,
   countEmotions,
+  isNeutralMood,
+  medianMoodOn,
   periodsEnding,
   streakEnding,
   timeframeDayCount,
@@ -97,9 +98,14 @@ describe('countEmotions and averageMoodOver', () => {
     ]);
   });
 
-  it('averages mood across all check-ins on the given dates', () => {
-    expect(averageMoodOn(days, ['2026-11-25', '2026-11-26'])).toBe(3);
-    expect(averageMoodOn(days, ['2026-11-24'])).toBeNull();
+  it('takes the median mood across all check-ins on the given dates', () => {
+    expect(medianMoodOn(days, ['2026-11-25', '2026-11-26'])).toBe(3);
+    expect(medianMoodOn({ ...days, '2026-11-24': day(5) }, ['2026-11-24', '2026-11-25', '2026-11-26'])).toBe(4);
+    expect(medianMoodOn(days, ['2026-11-24'])).toBeNull();
+  });
+
+  it('counts a median strictly between low and good as neutral', () => {
+    expect([2, 2.5, 3, 3.5, 4].map(isNeutralMood)).toEqual([false, true, true, true, false]);
   });
 
   it('averages mood within the window', () => {

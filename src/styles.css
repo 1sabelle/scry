@@ -150,6 +150,9 @@ legend { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; lett
 .chip .count { color: var(--muted); font-size: 0.8rem; }
 .chip.on .count { color: inherit; opacity: 0.75; }
 .day-panel .habits, .daily-lines { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--border); }
+/* A legend normally straddles its fieldset's top border, hiding the line and pushing the padding below itself. Floated, it sits under the line like any heading. */
+.day-panel .habits > legend { float: left; }
+.day-panel .habits > legend + * { clear: both; }
 .daily-lines { display: grid; gap: 8px; }
 .daily-line { display: grid; gap: 4px; }
 .daily-line-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }

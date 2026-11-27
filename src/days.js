@@ -36,6 +36,26 @@ export function isEmptyDay(day) {
   return day.checkIns.length === 0 && day.habitsDone.length === 0 && day.gratitude.trim() === '' && day.success.trim() === '';
 }
 
+// Emotions and activities are typed freely, so "Happy " and "happy" name the same one. Names are kept in lowercase.
+export function normaliseOptionName(text) {
+  return text.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+// The emotion or activity with this name, whatever its case or spacing, or null.
+export function findOptionByName(options, name) {
+  const normalisedName = normaliseOptionName(name);
+  return options.find((option) => normaliseOptionName(option.name) === normalisedName) ?? null;
+}
+
+// How many check-ins picked each emotion or activity, by its id. `optionsField` is "emotions" or "activities".
+export function countPicks(days, optionsField) {
+  const pickCounts = new Map();
+  for (const day of Object.values(days))
+    for (const checkIn of day.checkIns)
+      for (const id of checkIn[optionsField]) pickCounts.set(id, (pickCounts.get(id) ?? 0) + 1);
+  return pickCounts;
+}
+
 export function moodLabel(level) {
   return MOODS.find((mood) => mood.level === level)?.label;
 }

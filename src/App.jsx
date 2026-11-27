@@ -19,9 +19,14 @@ export default function App() {
   const today = todayIso(data.dayStartTime);
   const selectedDay = data.days[selectedDate] ?? EMPTY_DAY;
   const isToday = selectedDate === today;
-  const checkInDraft = useCheckInDraft(selectedDate, isToday, selectedDay.checkIns, data.dayStartTime, (checkIns) =>
-    updateSelectedDay({ checkIns }),
-  );
+  const checkInDraft = useCheckInDraft(selectedDate, isToday, selectedDay.checkIns, data.dayStartTime, (checkIns, addedOptions) => {
+    setData((current) => ({
+      ...current,
+      emotions: [...current.emotions, ...addedOptions.emotions],
+      activities: [...current.activities, ...addedOptions.activities],
+    }));
+    updateSelectedDay({ checkIns });
+  });
 
   useEffect(() => {
     setSaveFailed(!saveData(data));
@@ -53,7 +58,7 @@ export default function App() {
         <Calendar days={data.days} today={today} selectedDate={selectedDate} onSelect={setSelectedDate} />
         <CheckInList checkIns={selectedDay.checkIns} emotions={data.emotions} activities={data.activities} checkInDraft={checkInDraft} />
         <section className="day-panel">
-          <CheckInForm date={selectedDate} emotions={data.emotions} activities={data.activities} checkInDraft={checkInDraft} />
+          <CheckInForm date={selectedDate} days={data.days} emotions={data.emotions} activities={data.activities} checkInDraft={checkInDraft} />
           <DailyLines day={selectedDay} onChange={updateSelectedDay} />
           <Habits
             habits={data.habits}

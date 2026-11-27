@@ -1,21 +1,33 @@
 import { useEffect, useState } from 'react';
-import { MOODS, moodLabel, newId, upsertById } from './days.js';
+import { MOODS, countPicks, findOptionByName, moodLabel, newId, normaliseOptionName, upsertById } from './days.js';
 import { formatLong, nowTime } from './dates.js';
 
 // Check-ins on past days default to midday, since the real time is unknown.
 const PAST_DAY_TIME = '12:00';
 
+const NO_ADDED_OPTIONS = { emotions: [], activities: [] };
+
 function blankCheckIn(isToday) {
   return { id: null, time: isToday ? nowTime() : PAST_DAY_TIME, mood: null, emotions: [], activities: [], note: '' };
 }
 
+function blankDraft(date, isToday) {
+  return { date, checkIn: blankCheckIn(isToday), addedOptions: NO_ADDED_OPTIONS };
+}
+
 // The check-in being written or edited on `date`, shared by the list (to pick one to edit) and the form.
 // Switching to another day starts a blank one.
+// An emotion or activity typed for the first time waits in `addedOptions` and joins the lists when the check-in is saved,
+// so one picked and then removed again never shows up anywhere. `onChange(checkIns, addedOptions)` saves both.
 export function useCheckInDraft(date, isToday, checkIns, dayStartTime, onChange) {
-  const [drafted, setDrafted] = useState(() => ({ date, checkIn: blankCheckIn(isToday) }));
-  if (drafted.date !== date) setDrafted({ date, checkIn: blankCheckIn(isToday) });
+  const [drafted, setDrafted] = useState(() => blankDraft(date, isToday));
+  if (drafted.date !== date) setDrafted(blankDraft(date, isToday));
   const draft = drafted.checkIn;
-  const setDraft = (checkIn) => setDrafted({ date, checkIn });
+  const setDraft = (checkIn) => setDrafted({ ...drafted, checkIn });
+  const addedOptions = {
+    emotions: drafted.addedOptions.emotions.filter((option) => draft.emotions.includes(option.id)),
+    activities: drafted.addedOptions.activities.filter((option) => draft.activities.includes(option.id)),
+  };
   const isEditing = draft.id !== null;
   const hasUnsavedChanges = isEditing
     ? JSON.stringify(draft) !== JSON.stringify(checkIns.find((checkIn) => checkIn.id === draft.id))
@@ -32,16 +44,26 @@ export function useCheckInDraft(date, isToday, checkIns, dayStartTime, onChange)
   return {
     draft,
     isEditing,
+    addedOptions,
     update: (change) => setDraft({ ...draft, ...change }),
-    edit: setDraft,
-    cancel: () => setDraft(blankCheckIn(isToday)),
+    edit: (checkIn) => setDrafted({ date, checkIn, addedOptions: NO_ADDED_OPTIONS }),
+    cancel: () => setDrafted(blankDraft(date, isToday)),
+    // Picks a new emotion or activity named `name`. `optionsField` is "emotions" or "activities".
+    addOption(optionsField, name) {
+      const option = { id: newId(), name, archived: false };
+      setDrafted({
+        date,
+        checkIn: { ...draft, [optionsField]: [...draft[optionsField], option.id] },
+        addedOptions: { ...addedOptions, [optionsField]: [...addedOptions[optionsField], option] },
+      });
+    },
     save() {
-      onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }, dayStartTime));
-      setDraft(blankCheckIn(isToday));
+      onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }, dayStartTime), addedOptions);
+      setDrafted(blankDraft(date, isToday));
     },
     remove(id) {
-      onChange(checkIns.filter((checkIn) => checkIn.id !== id));
-      if (draft.id === id) setDraft(blankCheckIn(isToday));
+      onChange(checkIns.filter((checkIn) => checkIn.id !== id), NO_ADDED_OPTIONS);
+      if (draft.id === id) setDrafted(blankDraft(date, isToday));
     },
   };
 }
@@ -85,9 +107,9 @@ export function CheckInList({ checkIns, emotions, activities, checkInDraft }) {
   );
 }
 
-// Emotions and activities are added and edited under Settings.
-export function CheckInForm({ date, emotions, activities, checkInDraft }) {
-  const { draft, isEditing, update, save, cancel } = checkInDraft;
+// Emotions and activities are typed in; new ones are added as they are picked. Settings renames, merges and deletes them.
+export function CheckInForm({ date, days, emotions, activities, checkInDraft }) {
+  const { draft, isEditing, addedOptions, update, addOption, save, cancel } = checkInDraft;
 
   return (
     <div className="check-ins">
@@ -112,8 +134,24 @@ export function CheckInForm({ date, emotions, activities, checkInDraft }) {
         </div>
       </fieldset>
 
-      <OptionPicker title="Emotions" options={emotions} pickedIds={draft.emotions} onChange={(ids) => update({ emotions: ids })} />
-      <OptionPicker title="Activities" options={activities} pickedIds={draft.activities} onChange={(ids) => update({ activities: ids })} />
+      <OptionPicker
+        title="Emotions"
+        singular="emotion"
+        options={[...emotions, ...addedOptions.emotions]}
+        pickCounts={countPicks(days, 'emotions')}
+        pickedIds={draft.emotions}
+        onChange={(ids) => update({ emotions: ids })}
+        onAdd={(name) => addOption('emotions', name)}
+      />
+      <OptionPicker
+        title="Activities"
+        singular="activity"
+        options={[...activities, ...addedOptions.activities]}
+        pickCounts={countPicks(days, 'activities')}
+        pickedIds={draft.activities}
+        onChange={(ids) => update({ activities: ids })}
+        onAdd={(name) => addOption('activities', name)}
+      />
 
       <textarea rows={2} placeholder="A note about this moment (optional)" value={draft.note} onChange={(e) => update({ note: e.target.value })} />
       <div className="form-actions">
@@ -134,33 +172,85 @@ function PickedNames({ checkIn, emotions, activities }) {
   return <span className="check-in-options">{groups.map((names) => names.join(', ')).join(' · ')}</span>;
 }
 
-// Chips to pick emotions or activities. An archived one still shows while it is picked, so editing an old check-in keeps it.
-function OptionPicker({ title, options, pickedIds, onChange }) {
-  const pickable = options.filter((option) => !option.archived || pickedIds.includes(option.id));
+// A box to type emotions or activities into, with the picked ones as chips inside it.
+// Under it, the most picked ones to click, or while typing the ones that match; Tab completes the first match and Enter picks.
+// A name not seen before is added with `onAdd`.
+function OptionPicker({ title, singular, options, pickCounts, pickedIds, onChange, onAdd }) {
+  const [typed, setTyped] = useState('');
+  const typedName = normaliseOptionName(typed);
+  const picked = pickedIds.map((id) => options.find((option) => option.id === id));
+  const suggestions = suggestOptions(options, pickedIds, pickCounts, typedName);
+  const completion = typedName && suggestions[0] && normaliseOptionName(suggestions[0].name) !== typedName ? suggestions[0] : null;
+  const isNewName = typedName !== '' && !findOptionByName(options, typedName);
 
-  function toggle(optionId) {
-    onChange(pickedIds.includes(optionId) ? pickedIds.filter((id) => id !== optionId) : [...pickedIds, optionId]);
+  function pick(name) {
+    const option = findOptionByName(options, name);
+    if (!option) onAdd(normaliseOptionName(name));
+    else if (!pickedIds.includes(option.id)) onChange([...pickedIds, option.id]);
+    setTyped('');
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Tab' && completion) {
+      event.preventDefault();
+      setTyped(completion.name);
+    } else if (event.key === 'Enter' && typedName) {
+      event.preventDefault();
+      pick(typedName);
+    } else if (event.key === 'Backspace' && typed === '' && pickedIds.length > 0) {
+      onChange(pickedIds.slice(0, -1));
+    }
   }
 
   return (
     <fieldset>
       <legend>{title}</legend>
-      {pickable.length === 0 ? (
-        <p className="empty">No {title.toLowerCase()} yet. Add some under Settings and data.</p>
-      ) : (
-        <div className="chips">
-          {pickable.map((option) => (
-            <button
-              key={option.id}
-              className={`chip small ${pickedIds.includes(option.id) ? 'on' : ''}`}
-              aria-pressed={pickedIds.includes(option.id)}
-              onClick={() => toggle(option.id)}
-            >
+      <div className="option-input">
+        {picked.map((option) => (
+          <button
+            key={option.id}
+            className="chip small on"
+            onClick={() => onChange(pickedIds.filter((id) => id !== option.id))}
+            aria-label={`Remove ${option.name}`}
+          >
+            {option.name} <span aria-hidden="true">×</span>
+          </button>
+        ))}
+        <input value={typed} onChange={(e) => setTyped(e.target.value)} onKeyDown={handleKeyDown} placeholder={`Type ${article(singular)} ${singular}`} aria-label={title} />
+      </div>
+      {(suggestions.length > 0 || isNewName) && (
+        <div className="chips option-suggestions">
+          {suggestions.map((option) => (
+            <button key={option.id} className="chip small" onClick={() => pick(option.name)}>
               {option.name}
+              {option === completion && <kbd>Tab</kbd>}
             </button>
           ))}
+          {isNewName && (
+            <button className="chip small is-new" onClick={() => pick(typedName)}>
+              Add "{typedName}"
+            </button>
+          )}
         </div>
       )}
     </fieldset>
   );
+}
+
+const SUGGESTION_COUNT = 5;
+
+// With nothing typed, the most picked emotions or activities; otherwise those starting with the typed name, then those containing it.
+// Archived and already picked ones are left out.
+function suggestOptions(options, pickedIds, pickCounts, typedName) {
+  const offered = options
+    .filter((option) => !option.archived && !pickedIds.includes(option.id))
+    .sort((a, b) => (pickCounts.get(b.id) ?? 0) - (pickCounts.get(a.id) ?? 0));
+  if (!typedName) return offered.slice(0, SUGGESTION_COUNT);
+  const startsWithTyped = offered.filter((option) => normaliseOptionName(option.name).startsWith(typedName));
+  const containsTyped = offered.filter((option) => !startsWithTyped.includes(option) && normaliseOptionName(option.name).includes(typedName));
+  return [...startsWithTyped, ...containsTyped].slice(0, SUGGESTION_COUNT);
+}
+
+function article(word) {
+  return /^[aeiou]/.test(word) ? 'an' : 'a';
 }

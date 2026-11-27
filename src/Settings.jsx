@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { newId } from './days.js';
+import { countPicks, findOptionByName, newId, normaliseOptionName } from './days.js';
 import { todayIso } from './dates.js';
 import { parseData } from './storage.js';
 
 // A habit's name may be cleared while typing; one left empty gets this name so it stays valid.
-// Emotions and activities get "Unnamed emotion" and "Unnamed activity" the same way.
+// Emotions and activities get "unnamed emotion" and "unnamed activity" the same way.
 const UNNAMED_HABIT = 'Unnamed habit';
 
 export default function Settings({ data, onReplace }) {
@@ -65,43 +65,50 @@ function HabitSettings({ data, onReplace }) {
 }
 
 // The emotions or activities a check-in can pick, kept in `data[optionsField]` and in each check-in's field of the same name.
+// New ones are added by typing them in a check-in.
 function OptionSettings({ data, onReplace, title, optionsField, singular }) {
-  const [newName, setNewName] = useState('');
   const options = data[optionsField];
   const pickedCounts = countPicks(data.days, optionsField);
   const updateOption = (id, change) =>
     onReplace({ ...data, [optionsField]: options.map((option) => (option.id === id ? { ...option, ...change } : option)) });
 
-  function addOption() {
-    const name = newName.trim();
-    if (!name) return;
-    onReplace({ ...data, [optionsField]: [...options, { id: newId(), name, archived: false }] });
-    setNewName('');
+  // A name left empty becomes "unnamed emotion". A name another emotion already has offers to merge the two.
+  function finishRenaming(option) {
+    const name = normaliseOptionName(option.name);
+    if (!name) return updateOption(option.id, { name: `unnamed ${singular}` });
+    const namesake = findOptionByName(options.filter((other) => other.id !== option.id), name);
+    const pickedCount = pickedCounts.get(option.id) ?? 0;
+    if (namesake && confirm(`Merge into the existing "${namesake.name}"? Its ${pickedCount} check-ins will use "${namesake.name}" instead.`))
+      return mergeOption(option, namesake);
+    updateOption(option.id, { name });
+  }
+
+  function mergeOption(option, namesake) {
+    const days = replacePicks(data.days, optionsField, (ids) => [...new Set(ids.map((id) => (id === option.id ? namesake.id : id)))]);
+    onReplace({ ...data, [optionsField]: options.filter((o) => o.id !== option.id), days });
   }
 
   // Deleting an option also removes it from every check-in it was picked in. Archiving keeps that history.
   function deleteOption(option) {
     const pickedCount = pickedCounts.get(option.id) ?? 0;
     if (!confirm(`Delete "${option.name}" and remove it from ${pickedCount} check-ins? Archive it instead to keep the history.`)) return;
-    const days = {};
-    for (const [date, day] of Object.entries(data.days))
-      days[date] = {
-        ...day,
-        checkIns: day.checkIns.map((checkIn) => ({ ...checkIn, [optionsField]: checkIn[optionsField].filter((id) => id !== option.id) })),
-      };
+    const days = replacePicks(data.days, optionsField, (ids) => ids.filter((id) => id !== option.id));
     onReplace({ ...data, [optionsField]: options.filter((o) => o.id !== option.id), days });
   }
 
   return (
     <div className="settings-group">
       <h3>{title}</h3>
-      <p className="hint">Renaming {article(singular)} {singular} renames it in past check-ins too.</p>
+      <p className="hint">
+        New {title.toLowerCase()} are added by typing them in a check-in. Renaming {article(singular)} {singular} renames it in past check-ins too, and
+        giving it the name of another merges the two.
+      </p>
       {options.map((option) => (
         <div key={option.id} className={`option-setting ${option.archived ? 'is-archived' : ''}`}>
           <input
             value={option.name}
-            onChange={(e) => updateOption(option.id, { name: e.target.value })}
-            onBlur={() => !option.name.trim() && updateOption(option.id, { name: `Unnamed ${singular}` })}
+            onChange={(e) => updateOption(option.id, { name: e.target.value.toLowerCase() })}
+            onBlur={() => finishRenaming(option)}
             aria-label={`Name of the ${singular}`}
           />
           <button onClick={() => updateOption(option.id, { archived: !option.archived })}>{option.archived ? 'Restore' : 'Archive'}</button>
@@ -109,21 +116,16 @@ function OptionSettings({ data, onReplace, title, optionsField, singular }) {
           <PickedCount count={pickedCounts.get(option.id) ?? 0} />
         </div>
       ))}
-      <form className="add-row" onSubmit={(e) => { e.preventDefault(); addOption(); }}>
-        <input placeholder={`New ${singular}`} value={newName} onChange={(e) => setNewName(e.target.value)} />
-        <button type="submit" disabled={!newName.trim()}>Add {singular}</button>
-      </form>
     </div>
   );
 }
 
-// How many check-ins picked each option, by option id.
-function countPicks(days, optionsField) {
-  const pickedCounts = new Map();
-  for (const day of Object.values(days))
-    for (const checkIn of day.checkIns)
-      for (const id of checkIn[optionsField]) pickedCounts.set(id, (pickedCounts.get(id) ?? 0) + 1);
-  return pickedCounts;
+// Every check-in's picks in `optionsField`, passed through `replace`.
+function replacePicks(days, optionsField, replace) {
+  const replaced = {};
+  for (const [date, day] of Object.entries(days))
+    replaced[date] = { ...day, checkIns: day.checkIns.map((checkIn) => ({ ...checkIn, [optionsField]: replace(checkIn[optionsField]) })) };
+  return replaced;
 }
 
 function PickedCount({ count }) {

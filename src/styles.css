@@ -165,6 +165,14 @@ textarea, input:not([type='file']), select {
 textarea { width: 100%; resize: vertical; display: block; }
 textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); background: var(--hover); }
 select option, select optgroup { background: #1c1d2b; color: var(--text); }
+/* Picked emotions or activities sit as chips inside the box they are typed into. */
+.option-input { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--raised); }
+.option-input:focus-within { outline: 1px solid var(--accent); background: var(--hover); }
+.option-input input { flex: 1; min-width: 10ch; border: none; padding: 2px 4px; background: none; }
+.option-input input:focus { outline: none; background: none; }
+.option-suggestions { margin-top: 6px; }
+.chip kbd { font: inherit; font-size: 0.7rem; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+.chip.is-new { border-style: dashed; }
 .time-input { margin-left: auto; padding: 2px 6px; font-size: 0.85rem; text-transform: none; letter-spacing: 0; color: var(--text); }
 
 button { cursor: pointer; }

@@ -16,6 +16,7 @@ It runs entirely in your browser. No account, no server, no ads, no one
 peeking. Your data never leaves your device unless you export it yourself.
 
 - **Check-ins**: as many per day as you like, each with a mood, emotions from your own list and a note
+- **Grateful for and daily success**: one optional line each per day
 - **Habits**: your own list, ticked off per day, with a streak; archive one to keep its history
 - **Streaks**: your check-in streak and the next milestone
 - **Patterns**: the last 12 weeks at a glance, mood on days with and without each habit, and your most common emotions

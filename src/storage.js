@@ -147,7 +147,16 @@ function parseDay(date, day, habitIds, optionIds, errors) {
     if (habitIds.has(habitId)) habitsDone.push(habitId);
     else errors.push(`${date}: habitsDone "${habitId}" is not the id of a habit.`);
   }
-  return { checkIns, habitsDone };
+  const gratitude = parseOptionalText(day.gratitude, `${date}: gratitude`, errors);
+  const success = parseOptionalText(day.success, `${date}: success`, errors);
+  return { checkIns, habitsDone, gratitude, success };
+}
+
+function parseOptionalText(text, where, errors) {
+  if (text === undefined) return '';
+  if (typeof text === 'string') return text;
+  errors.push(`${where} "${text}" is not text.`);
+  return '';
 }
 
 function collectCheckInErrors(checkIn, where, optionIds) {

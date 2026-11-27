@@ -146,7 +146,11 @@ legend { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; lett
 .chip.static:hover { background: none; }
 .chip .count { color: var(--muted); font-size: 0.8rem; }
 .chip.on .count { color: inherit; opacity: 0.75; }
-.day-panel .habits { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--border); }
+.day-panel .habits, .daily-lines { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--border); }
+.daily-lines { display: grid; gap: 8px; }
+.daily-line { display: grid; gap: 4px; }
+.daily-line-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.daily-line input { width: 100%; }
 .habit-check { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1px solid currentColor; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
 
 textarea, input:not([type='file']), select {

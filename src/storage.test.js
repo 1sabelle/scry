@@ -21,6 +21,8 @@ describe('parseData', () => {
     expect(data.days['2026-11-20']).toEqual({
       checkIns: [{ id: 'c1', time: '08:30', mood: 4, emotions: [], note: '' }],
       habitsDone: ['h1'],
+      gratitude: '',
+      success: '',
     });
   });
 
@@ -38,7 +40,7 @@ describe('parseData', () => {
       habits: [habit],
       emotions: DEFAULT_EMOTIONS,
       dayStartTime: '00:00',
-      days: { '2026-11-20': { checkIns: [], habitsDone: ['h1'] } },
+      days: { '2026-11-20': { checkIns: [], habitsDone: ['h1'], gratitude: '', success: '' } },
     });
   });
 
@@ -84,10 +86,19 @@ describe('parseData', () => {
     expect(data.days['2026-11-20'].checkIns.map((checkIn) => checkIn.id)).toEqual(['c1']);
   });
 
-  it('starts the day at midnight when the saved start of day is not a time', () => {
-    const { data, errors } = parseData({ dayStartTime: '4am', days: {} });
-    expect(errors).toEqual(['dayStartTime: "4am" is not a time in HH:MM format, so the day starts at 00:00.']);
+  it('keeps a day that only has a gratitude, and checks the start of day', () => {
+    const { data, errors } = parseData({
+      dayStartTime: '4am',
+      days: {
+        '2026-11-20': { gratitude: 'Sunshine', success: 7 },
+      },
+    });
+    expect(errors).toEqual([
+      'dayStartTime: "4am" is not a time in HH:MM format, so the day starts at 00:00.',
+      '2026-11-20: success "7" is not text.',
+    ]);
     expect(data.dayStartTime).toBe('00:00');
+    expect(data.days).toEqual({ '2026-11-20': { checkIns: [], habitsDone: [], gratitude: 'Sunshine', success: '' } });
   });
 
   it('drops days left with nothing valid', () => {

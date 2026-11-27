@@ -1,6 +1,6 @@
 import { minutesOfDay } from './dates.js';
 
-// A day holds the mood check-ins and habits done logged on that date.
+// A day holds the mood check-ins, habits done, and one optional gratitude and success logged on that date.
 // Days are stored by ISO date ("2026-11-26"); a day with nothing logged is not stored at all.
 
 export const MOODS = [
@@ -19,10 +19,16 @@ export const DEFAULT_EMOTIONS = [
   'tired', 'bored', 'lonely', 'anxious', 'stressed', 'overwhelmed', 'frustrated', 'sad',
 ].map((name) => ({ id: name, name, archived: false }));
 
-export const EMPTY_DAY = { checkIns: [], habitsDone: [] };
+// The two optional lines a day can hold beside its check-ins, by the day's field that stores each.
+export const DAILY_LINES = [
+  { field: 'gratitude', label: 'Grateful for', placeholder: 'One thing you are grateful for today' },
+  { field: 'success', label: 'Daily success', placeholder: 'One thing that went well today' },
+];
+
+export const EMPTY_DAY = { checkIns: [], habitsDone: [], gratitude: '', success: '' };
 
 export function isEmptyDay(day) {
-  return day.checkIns.length === 0 && day.habitsDone.length === 0;
+  return day.checkIns.length === 0 && day.habitsDone.length === 0 && day.gratitude.trim() === '' && day.success.trim() === '';
 }
 
 export function moodLabel(level) {

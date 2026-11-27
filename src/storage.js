@@ -1,5 +1,5 @@
 import { DEFAULT_EMOTIONS, MOOD_LEVELS, isEmptyDay } from './days.js';
-import { isIsoDate } from './dates.js';
+import { MIDNIGHT, isIsoDate } from './dates.js';
 
 const STORAGE_KEY = 'scry.v1';
 const CORRUPT_BACKUP_KEY = 'scry.v1.corrupt';
@@ -8,6 +8,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 export const EMPTY_DATA = {
   habits: [],
   emotions: DEFAULT_EMOTIONS,
+  dayStartTime: MIDNIGHT,
   days: {},
 };
 
@@ -55,6 +56,7 @@ export function parseData(json) {
   const habits = parseList(json.habits, 'habits', errors, collectHabitErrors, normalizeHabit);
   // Data saved before emotions became editable has none, and starts with the default ones.
   const emotions = json.emotions === undefined ? DEFAULT_EMOTIONS : parseList(json.emotions, 'emotions', errors, collectOptionErrors, normalizeOption);
+  const dayStartTime = parseDayStartTime(json.dayStartTime, errors);
   const habitIds = new Set(habits.map((habit) => habit.id));
   const optionIds = { emotions: idsOf(emotions) };
   const days = {};
@@ -62,11 +64,18 @@ export function parseData(json) {
     const day = parseDay(date, savedDay, habitIds, optionIds, errors);
     if (day && !isEmptyDay(day)) days[date] = day;
   }
-  return { data: { habits, emotions, days }, errors };
+  return { data: { habits, emotions, dayStartTime, days }, errors };
 }
 
 function idsOf(list) {
   return new Set(list.map((entry) => entry.id));
+}
+
+function parseDayStartTime(dayStartTime, errors) {
+  if (dayStartTime === undefined) return MIDNIGHT;
+  if (TIME_PATTERN.test(dayStartTime)) return dayStartTime;
+  errors.push(`dayStartTime: "${dayStartTime}" is not a time in HH:MM format, so the day starts at ${MIDNIGHT}.`);
+  return MIDNIGHT;
 }
 
 function parseList(list, name, errors, collectErrors, normalize) {

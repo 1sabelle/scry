@@ -1,3 +1,5 @@
+import { minutesOfDay } from './dates.js';
+
 // A day holds the mood check-ins and habits done logged on that date.
 // Days are stored by ISO date ("2026-11-26"); a day with nothing logged is not stored at all.
 
@@ -34,15 +36,15 @@ export function averageMood(day) {
   return checkIns.reduce((sum, checkIn) => sum + checkIn.mood, 0) / checkIns.length;
 }
 
-export function byTime(a, b) {
-  return a.time.localeCompare(b.time);
+// Replaces the entry with the same id, or adds it; keeps the list in order through a day that
+// starts at `dayStartTime`, so with "04:00" a 01:30 entry comes after the evening's.
+export function upsertById(list, entry, dayStartTime) {
+  const others = list.filter((existing) => existing.id !== entry.id);
+  const minutesIntoDay = (time) => (minutesOfDay(time) - minutesOfDay(dayStartTime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return [...others, entry].sort((a, b) => minutesIntoDay(a.time) - minutesIntoDay(b.time));
 }
 
-// Replaces the entry with the same id, or adds it; keeps the list in time order.
-export function upsertById(list, entry) {
-  const others = list.filter((existing) => existing.id !== entry.id);
-  return [...others, entry].sort(byTime);
-}
+const MINUTES_PER_DAY = 24 * 60;
 
 export function newId() {
   return crypto.randomUUID();

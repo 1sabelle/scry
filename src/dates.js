@@ -24,9 +24,18 @@ export function daysBetween(fromIsoDate, toIsoDate) {
   return Math.round((parseIso(toIsoDate) - parseIso(fromIsoDate)) / MS_PER_DAY);
 }
 
-export function todayIso() {
-  const now = new Date();
+// Today's date for a day that starts at `dayStartTime`: with "04:00", 01:30 still belongs to yesterday.
+export function todayIso(dayStartTime = MIDNIGHT) {
+  const now = new Date(Date.now() - minutesOfDay(dayStartTime) * 60000);
   return formatIso(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+export const MIDNIGHT = '00:00';
+
+// Minutes since midnight of an "HH:MM" time.
+export function minutesOfDay(time) {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
 }
 
 export function isoForYearMonthDay(year, monthIndex, day) {

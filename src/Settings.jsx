@@ -13,6 +13,7 @@ export default function Settings({ data, onReplace }) {
       <summary>Settings and data</summary>
       <HabitSettings data={data} onReplace={onReplace} />
       <OptionSettings data={data} onReplace={onReplace} title="Emotions" optionsField="emotions" singular="emotion" />
+      <DayStartSettings data={data} onReplace={onReplace} />
       <DataSettings data={data} onReplace={onReplace} />
     </details>
   );
@@ -117,6 +118,21 @@ function OptionSettings({ data, onReplace, title, optionsField, singular }) {
 
 function article(word) {
   return /^[aeiou]/.test(word) ? 'an' : 'a';
+}
+
+function DayStartSettings({ data, onReplace }) {
+  return (
+    <div className="settings-group">
+      <h3>Start of day</h3>
+      <p className="hint">Check-ins before this time count towards the day before, so a late night stays part of the evening it belongs to.</p>
+      <input
+        type="time"
+        value={data.dayStartTime}
+        onChange={(e) => e.target.value && onReplace({ ...data, dayStartTime: e.target.value })}
+        aria-label="Start of day"
+      />
+    </div>
+  );
 }
 
 function DataSettings({ data, onReplace }) {

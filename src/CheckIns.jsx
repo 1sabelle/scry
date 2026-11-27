@@ -10,13 +10,13 @@ function blankCheckIn(isToday) {
 }
 
 // Emotions are added and edited under Settings.
-export default function CheckIns({ date, isToday, checkIns, emotions, onChange }) {
+export default function CheckIns({ date, isToday, checkIns, emotions, dayStartTime, onChange }) {
   const [draft, setDraft] = useState(() => blankCheckIn(isToday));
   const isEditing = draft.id !== null;
   const update = (change) => setDraft({ ...draft, ...change });
 
   function save() {
-    onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }));
+    onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }, dayStartTime));
     setDraft(blankCheckIn(isToday));
   }
 

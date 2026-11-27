@@ -12,9 +12,9 @@ import Starfield from './Starfield.jsx';
 
 export default function App() {
   const [data, setData] = useState(loadData);
-  const [selectedDate, setSelectedDate] = useState(todayIso);
+  const [selectedDate, setSelectedDate] = useState(() => todayIso(data.dayStartTime));
   const [saveFailed, setSaveFailed] = useState(false);
-  const today = todayIso();
+  const today = todayIso(data.dayStartTime);
   const selectedDay = data.days[selectedDate] ?? EMPTY_DAY;
 
   useEffect(() => {
@@ -51,6 +51,7 @@ export default function App() {
             isToday={selectedDate === today}
             checkIns={selectedDay.checkIns}
             emotions={data.emotions}
+            dayStartTime={data.dayStartTime}
             onChange={(checkIns) => updateSelectedDay({ checkIns })}
           />
           <Habits

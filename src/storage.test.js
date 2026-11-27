@@ -17,6 +17,7 @@ describe('parseData', () => {
     });
     expect(errors).toEqual([]);
     expect(data.habits).toEqual([habit]);
+    expect(data.dayStartTime).toBe('00:00');
     expect(data.days['2026-11-20']).toEqual({
       checkIns: [{ id: 'c1', time: '08:30', mood: 4, emotions: [], note: '' }],
       habitsDone: ['h1'],
@@ -36,6 +37,7 @@ describe('parseData', () => {
     expect(data).toEqual({
       habits: [habit],
       emotions: DEFAULT_EMOTIONS,
+      dayStartTime: '00:00',
       days: { '2026-11-20': { checkIns: [], habitsDone: ['h1'] } },
     });
   });
@@ -80,6 +82,12 @@ describe('parseData', () => {
     expect(errors).toEqual(['2026-11-20 checkIns[1]: emotion "calm" is not the id of an emotion.']);
     expect(data.emotions).toEqual([{ id: 'e1', name: 'cosy', archived: false }]);
     expect(data.days['2026-11-20'].checkIns.map((checkIn) => checkIn.id)).toEqual(['c1']);
+  });
+
+  it('starts the day at midnight when the saved start of day is not a time', () => {
+    const { data, errors } = parseData({ dayStartTime: '4am', days: {} });
+    expect(errors).toEqual(['dayStartTime: "4am" is not a time in HH:MM format, so the day starts at 00:00.']);
+    expect(data.dayStartTime).toBe('00:00');
   });
 
   it('drops days left with nothing valid', () => {

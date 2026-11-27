@@ -1,4 +1,4 @@
-// A day holds the mood check-ins, habits done and journal entries logged on that date.
+// A day holds the mood check-ins and habits done logged on that date.
 // Days are stored by ISO date ("2026-11-26"); a day with nothing logged is not stored at all.
 
 export const MOODS = [
@@ -15,19 +15,10 @@ export const EMOTIONS = [
   'tired', 'bored', 'lonely', 'anxious', 'stressed', 'overwhelmed', 'frustrated', 'sad',
 ];
 
-export const DEFAULT_PROMPTS = [
-  'What took up most of your attention today?',
-  'What is one thing you are grateful for right now?',
-  'What drained your energy today, and what gave you some back?',
-  'What would make tomorrow a little easier?',
-  'What are you avoiding thinking about?',
-  'When did you feel most like yourself today?',
-];
-
-export const EMPTY_DAY = { checkIns: [], habitsDone: [], journal: [] };
+export const EMPTY_DAY = { checkIns: [], habitsDone: [] };
 
 export function isEmptyDay(day) {
-  return day.checkIns.length === 0 && day.habitsDone.length === 0 && day.journal.length === 0;
+  return day.checkIns.length === 0 && day.habitsDone.length === 0;
 }
 
 export function moodLabel(level) {
@@ -53,9 +44,4 @@ export function upsertById(list, entry) {
 
 export function newId() {
   return crypto.randomUUID();
-}
-
-// The question a habit reflection answers: the habit's own prompt, or a general one.
-export function reflectionPromptFor(habit) {
-  return habit.reflectionPrompt.trim() || `How did "${habit.name}" go today?`;
 }

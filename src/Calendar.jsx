@@ -48,7 +48,6 @@ export default function Calendar({ days, today, selectedDate, onSelect }) {
               <span className="number">{Number(date.slice(8))}</span>
               <span className="marks">
                 {day?.habitsDone.length > 0 && <HabitMark count={day.habitsDone.length} />}
-                {day?.journal.length > 0 && <JournalMark />}
               </span>
             </button>
           );
@@ -59,7 +58,6 @@ export default function Calendar({ days, today, selectedDate, onSelect }) {
           <span key={mood.level}><i className={`swatch mood-${mood.level}`} /> {mood.label}</span>
         ))}
         <span><HabitMark count={1} /> Habit done</span>
-        <span><JournalMark /> Journal</span>
       </div>
     </section>
   );
@@ -68,8 +66,4 @@ export default function Calendar({ days, today, selectedDate, onSelect }) {
 // One tick per habit done, up to three.
 function HabitMark({ count }) {
   return <span className="habit-mark">{'✓'.repeat(Math.min(count, 3))}</span>;
-}
-
-function JournalMark() {
-  return <i className="journal-mark" />;
 }

@@ -1,18 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { parseData } from './storage.js';
 
-const habit = { id: 'h1', name: 'Walk', reflectionPrompt: '', archived: false };
+const habit = { id: 'h1', name: 'Walk', archived: false };
 
 describe('parseData', () => {
   it('keeps valid data and fills in optional fields', () => {
     const { data, errors } = parseData({
       habits: [{ id: 'h1', name: 'Walk' }],
-      prompts: [{ id: 'p1', text: 'Why?' }],
       days: {
         '2026-11-20': {
           checkIns: [{ id: 'c1', time: '08:30', mood: 4 }],
           habitsDone: ['h1'],
-          journal: [{ id: 'j1', time: '21:00', text: 'Nice day' }],
         },
       },
     });
@@ -21,7 +19,22 @@ describe('parseData', () => {
     expect(data.days['2026-11-20']).toEqual({
       checkIns: [{ id: 'c1', time: '08:30', mood: 4, emotions: [], note: '' }],
       habitsDone: ['h1'],
-      journal: [{ id: 'j1', time: '21:00', prompt: null, habitId: null, text: 'Nice day' }],
+    });
+  });
+
+  it('drops the journal, prompts and reflection prompts of data saved while the journal existed', () => {
+    const { data, errors } = parseData({
+      habits: [{ id: 'h1', name: 'Walk', reflectionPrompt: 'How was it?' }],
+      prompts: [{ id: 'p1', text: 'Why?' }],
+      days: {
+        '2026-11-20': { checkIns: [], habitsDone: ['h1'], journal: [{ id: 'j1', time: '21:00', text: 'Nice day' }] },
+        '2026-11-21': { checkIns: [], habitsDone: [], journal: [{ id: 'j2', time: '21:00', text: 'Only words' }] },
+      },
+    });
+    expect(errors).toEqual([]);
+    expect(data).toEqual({
+      habits: [habit],
+      days: { '2026-11-20': { checkIns: [], habitsDone: ['h1'] } },
     });
   });
 

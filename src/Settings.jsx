@@ -11,7 +11,6 @@ export default function Settings({ data, onReplace }) {
     <details className="settings">
       <summary>Settings and data</summary>
       <HabitSettings data={data} onReplace={onReplace} />
-      <PromptSettings data={data} onReplace={onReplace} />
       <DataSettings data={data} onReplace={onReplace} />
     </details>
   );
@@ -25,7 +24,7 @@ function HabitSettings({ data, onReplace }) {
   function addHabit() {
     const name = newName.trim();
     if (!name) return;
-    onReplace({ ...data, habits: [...data.habits, { id: newId(), name, reflectionPrompt: '', archived: false }] });
+    onReplace({ ...data, habits: [...data.habits, { id: newId(), name, archived: false }] });
     setNewName('');
   }
 
@@ -41,7 +40,6 @@ function HabitSettings({ data, onReplace }) {
   return (
     <div className="settings-group">
       <h3>Habits</h3>
-      <p className="hint">The reflection prompt is offered in the journal for that habit. Leave it empty for a general one.</p>
       {data.habits.map((habit) => (
         <div key={habit.id} className={`habit-setting ${habit.archived ? 'is-archived' : ''}`}>
           <input
@@ -50,13 +48,6 @@ function HabitSettings({ data, onReplace }) {
             onBlur={() => !habit.name.trim() && updateHabit(habit.id, { name: UNNAMED_HABIT })}
             aria-label="Habit name"
           />
-          <input
-            className="wide"
-            placeholder="Reflection prompt (optional)"
-            value={habit.reflectionPrompt}
-            onChange={(e) => updateHabit(habit.id, { reflectionPrompt: e.target.value })}
-            aria-label={`Reflection prompt for ${habit.name}`}
-          />
           <button onClick={() => updateHabit(habit.id, { archived: !habit.archived })}>{habit.archived ? 'Restore' : 'Archive'}</button>
           <button onClick={() => deleteHabit(habit)}>Delete</button>
         </div>
@@ -64,40 +55,6 @@ function HabitSettings({ data, onReplace }) {
       <form className="add-row" onSubmit={(e) => { e.preventDefault(); addHabit(); }}>
         <input placeholder="New habit" value={newName} onChange={(e) => setNewName(e.target.value)} />
         <button type="submit" disabled={!newName.trim()}>Add habit</button>
-      </form>
-    </div>
-  );
-}
-
-function PromptSettings({ data, onReplace }) {
-  const [newText, setNewText] = useState('');
-  const removePrompt = (id) => onReplace({ ...data, prompts: data.prompts.filter((prompt) => prompt.id !== id) });
-
-  function addPrompt() {
-    const text = newText.trim();
-    if (!text) return;
-    onReplace({ ...data, prompts: [...data.prompts, { id: newId(), text }] });
-    setNewText('');
-  }
-
-  return (
-    <div className="settings-group">
-      <h3>Journal prompts</h3>
-      {data.prompts.map((prompt) => (
-        <div key={prompt.id} className="prompt-setting">
-          <input
-            className="wide"
-            value={prompt.text}
-            onChange={(e) => onReplace({ ...data, prompts: data.prompts.map((p) => (p.id === prompt.id ? { ...p, text: e.target.value } : p)) })}
-            onBlur={() => !prompt.text.trim() && removePrompt(prompt.id)}
-            aria-label="Prompt"
-          />
-          <button onClick={() => removePrompt(prompt.id)}>Remove</button>
-        </div>
-      ))}
-      <form className="add-row" onSubmit={(e) => { e.preventDefault(); addPrompt(); }}>
-        <input className="wide" placeholder="New prompt" value={newText} onChange={(e) => setNewText(e.target.value)} />
-        <button type="submit" disabled={!newText.trim()}>Add prompt</button>
       </form>
     </div>
   );

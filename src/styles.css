@@ -52,7 +52,7 @@ body::before {
     #a3816e 100%
   );
 }
-h1, h2, .collapsible > summary, .settings summary, .journal-prompt {
+h1, h2, .collapsible > summary, .settings summary {
   font-family: 'Lora Variable', Georgia, serif;
   font-weight: 400;
   line-height: 1.1;
@@ -96,16 +96,14 @@ section, .settings, .collapsible {
 .layout {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  grid-template-rows: auto 1fr;
-  grid-template-areas: 'calendar day' 'journal day';
+  grid-template-areas: 'calendar day';
   gap: 16px;
   align-items: start;
 }
 .layout .calendar { grid-area: calendar; }
 .layout .day-panel { grid-area: day; }
-.layout .journal { grid-area: journal; }
 @media (max-width: 760px) {
-  .layout { grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: 'calendar' 'day' 'journal'; }
+  .layout { grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: 'calendar' 'day'; }
 }
 
 .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -126,7 +124,6 @@ section, .settings, .collapsible {
 .day.is-today .number { text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
 .day.is-selected { border-color: var(--accent); border-width: 2px; }
 .habit-mark { color: var(--accent); font-weight: 700; letter-spacing: -1px; }
-.journal-mark { width: 5px; height: 5px; border-radius: 50%; background: var(--cream); opacity: 0.8; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; font-size: 0.8rem; color: var(--muted); }
 .legend span { display: flex; align-items: center; gap: 5px; }
@@ -161,10 +158,10 @@ select option, select optgroup { background: #1c1d2b; color: var(--text); }
 
 button { cursor: pointer; }
 .form-actions, .data-actions { display: flex; gap: 8px; margin-top: 8px; }
-.form-actions button, .data-actions button, .data-actions .button, .settings-group button, .journal-topic button {
+.form-actions button, .data-actions button, .data-actions .button, .settings-group button {
   border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; background: var(--raised);
 }
-.form-actions button:hover, .data-actions button:hover, .settings-group button:hover:not(:disabled), .journal-topic button:hover:not(:disabled) { background: var(--hover); }
+.form-actions button:hover, .data-actions button:hover, .settings-group button:hover:not(:disabled) { background: var(--hover); }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 button.primary:hover:not(:disabled) { background: var(--accent-hover); }
 button:disabled { opacity: 0.55; cursor: default; }
@@ -186,19 +183,6 @@ button.primary:disabled { opacity: 0.8; background: transparent; color: var(--ac
 .remove { background: none; border: none; color: var(--muted); font-size: 1.2rem; line-height: 1; padding: 6px; border-radius: 6px; }
 .remove:hover { color: var(--text); background: var(--hover); }
 
-.journal-entries { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 12px; }
-.journal-entries li { border-left: 2px solid var(--border); padding-left: 12px; }
-.journal-entries li.is-editing { border-color: var(--accent); }
-.journal-entry-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.journal-entry-actions { margin-left: auto; display: flex; gap: 4px; }
-.journal-entry-actions button { background: none; border: none; color: var(--muted); font-size: 0.8rem; padding: 2px 6px; border-radius: 6px; }
-.journal-entry-actions button:hover { color: var(--text); background: var(--hover); }
-.journal-prompt { font-style: italic; color: var(--heading); font-size: 1.05rem; margin: 0; }
-.journal-composer .journal-prompt { margin: 10px 0 8px; }
-.journal-text { margin: 4px 0 0; white-space: pre-wrap; }
-.journal-topic { display: flex; gap: 8px; }
-.journal-topic select { flex: 1; min-width: 0; }
-.journal-composer textarea { margin-top: 8px; }
 
 .collapsible > summary, .settings summary { cursor: pointer; font-size: 24px; }
 .collapsible[open] > summary, .settings[open] > summary { margin-bottom: 12px; }
@@ -221,7 +205,7 @@ th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
 .comparison { display: block; overflow-x: auto; }
 
 .settings-group + .settings-group { margin-top: 20px; }
-.habit-setting, .prompt-setting, .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.habit-setting, .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .habit-setting input:first-child, .add-row input:first-child:not(.wide) { width: 160px; }
 .wide { flex: 1; min-width: 180px; }
 .habit-setting.is-archived input { opacity: 0.5; }

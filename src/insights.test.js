@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { TIMEFRAMES, averageMoodOn, averageMoodOver, compareMoodByHabit, countEmotions, periodsEnding, timeframeDayCount } from './insights.js';
 
-const walk = { id: 'walk', name: 'Walk', reflectionPrompt: '', archived: false };
+const walk = { id: 'walk', name: 'Walk', archived: false };
 
 function day(mood, habitsDone = [], emotions = []) {
-  return { checkIns: [{ id: `c${mood}`, time: '12:00', mood, emotions, note: '' }], habitsDone, journal: [] };
+  return { checkIns: [{ id: `c${mood}`, time: '12:00', mood, emotions, note: '' }], habitsDone };
 }
 
 describe('compareMoodByHabit', () => {

@@ -6,7 +6,6 @@ import Summary from './Summary.jsx';
 import Calendar from './Calendar.jsx';
 import CheckIns from './CheckIns.jsx';
 import Habits from './Habits.jsx';
-import Journal from './Journal.jsx';
 import Patterns from './Patterns.jsx';
 import Settings from './Settings.jsx';
 import Starfield from './Starfield.jsx';
@@ -59,15 +58,6 @@ export default function App() {
             onChange={(habitsDone) => updateSelectedDay({ habitsDone })}
           />
         </section>
-        <Journal
-          key={`journal-${selectedDate}`}
-          date={selectedDate}
-          isToday={selectedDate === today}
-          day={selectedDay}
-          habits={data.habits}
-          prompts={data.prompts}
-          onChange={(journal) => updateSelectedDay({ journal })}
-        />
       </main>
       <Patterns data={data} today={today} onSelect={setSelectedDate} />
       <Settings data={data} onReplace={setData} />

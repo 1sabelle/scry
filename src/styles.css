@@ -184,7 +184,7 @@ button.primary:disabled { opacity: 0.8; background: transparent; color: var(--ac
 .entry-body:hover { background: var(--hover); }
 .entry-time { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .check-in-mood { font-weight: 600; }
-.check-in-emotions { color: var(--muted); font-size: 0.85rem; }
+.check-in-options { color: var(--muted); font-size: 0.85rem; }
 .check-in-note { flex-basis: 100%; font-size: 0.9rem; }
 .remove { background: none; border: none; color: var(--muted); font-size: 1.2rem; line-height: 1; padding: 6px; border-radius: 6px; }
 .remove:hover { color: var(--text); background: var(--hover); }

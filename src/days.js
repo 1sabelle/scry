@@ -19,6 +19,11 @@ export const DEFAULT_EMOTIONS = [
   'tired', 'bored', 'lonely', 'anxious', 'stressed', 'overwhelmed', 'frustrated', 'sad',
 ].map((name) => ({ id: name, name, archived: false }));
 
+// The activities offered until the user edits the list, picked on a check-in to say what you were doing.
+export const DEFAULT_ACTIVITIES = [
+  'work', 'study', 'exercise', 'outdoors', 'friends', 'family', 'partner', 'rest', 'chores', 'reading', 'gaming', 'screen time',
+].map((name) => ({ id: name, name, archived: false }));
+
 // The two optional lines a day can hold beside its check-ins, by the day's field that stores each.
 export const DAILY_LINES = [
   { field: 'gratitude', label: 'Grateful for', placeholder: 'One thing you are grateful for today' },

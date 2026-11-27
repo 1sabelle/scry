@@ -1,4 +1,4 @@
-import { DEFAULT_EMOTIONS, MOOD_LEVELS, isEmptyDay } from './days.js';
+import { DEFAULT_ACTIVITIES, DEFAULT_EMOTIONS, MOOD_LEVELS, isEmptyDay } from './days.js';
 import { MIDNIGHT, isIsoDate } from './dates.js';
 
 const STORAGE_KEY = 'scry.v1';
@@ -8,6 +8,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 export const EMPTY_DATA = {
   habits: [],
   emotions: DEFAULT_EMOTIONS,
+  activities: DEFAULT_ACTIVITIES,
   dayStartTime: MIDNIGHT,
   days: {},
 };
@@ -54,17 +55,19 @@ export function parseData(json) {
   }
   const errors = [];
   const habits = parseList(json.habits, 'habits', errors, collectHabitErrors, normalizeHabit);
-  // Data saved before emotions became editable has none, and starts with the default ones.
+  // Data saved before emotions or activities became editable has none of them, and starts with the default ones.
   const emotions = json.emotions === undefined ? DEFAULT_EMOTIONS : parseList(json.emotions, 'emotions', errors, collectOptionErrors, normalizeOption);
+  const activities =
+    json.activities === undefined ? DEFAULT_ACTIVITIES : parseList(json.activities, 'activities', errors, collectOptionErrors, normalizeOption);
   const dayStartTime = parseDayStartTime(json.dayStartTime, errors);
   const habitIds = new Set(habits.map((habit) => habit.id));
-  const optionIds = { emotions: idsOf(emotions) };
+  const optionIds = { emotions: idsOf(emotions), activities: idsOf(activities) };
   const days = {};
   for (const [date, savedDay] of Object.entries(json.days)) {
     const day = parseDay(date, savedDay, habitIds, optionIds, errors);
     if (day && !isEmptyDay(day)) days[date] = day;
   }
-  return { data: { habits, emotions, dayStartTime, days }, errors };
+  return { data: { habits, emotions, activities, dayStartTime, days }, errors };
 }
 
 function idsOf(list) {
@@ -108,7 +111,7 @@ function normalizeHabit(habit) {
   return { id: habit.id, name: habit.name, archived: habit.archived ?? false };
 }
 
-// An option is an emotion a check-in can pick.
+// An option is an emotion or activity a check-in can pick.
 function collectOptionErrors(option, where) {
   if (!isObject(option)) return [`${where}: expected an object, got "${JSON.stringify(option)}".`];
   const errors = [];
@@ -166,6 +169,7 @@ function collectCheckInErrors(checkIn, where, optionIds) {
   if (!TIME_PATTERN.test(checkIn.time)) errors.push(`${where}: time "${checkIn.time}" is not a time in HH:MM format.`);
   if (!MOOD_LEVELS.includes(checkIn.mood)) errors.push(`${where}: mood "${checkIn.mood}" is not one of ${MOOD_LEVELS.join(', ')}.`);
   errors.push(...collectPickedOptionErrors(checkIn.emotions, optionIds.emotions, 'emotions', 'emotion', where));
+  errors.push(...collectPickedOptionErrors(checkIn.activities, optionIds.activities, 'activities', 'activity', where));
   if (checkIn.note !== undefined && typeof checkIn.note !== 'string') errors.push(`${where}: note "${checkIn.note}" is not text.`);
   return errors;
 }
@@ -178,7 +182,14 @@ function collectPickedOptionErrors(pickedIds, optionIds, field, singular, where)
 }
 
 function normalizeCheckIn(checkIn) {
-  return { id: checkIn.id, time: checkIn.time, mood: checkIn.mood, emotions: checkIn.emotions ?? [], note: checkIn.note ?? '' };
+  return {
+    id: checkIn.id,
+    time: checkIn.time,
+    mood: checkIn.mood,
+    emotions: checkIn.emotions ?? [],
+    activities: checkIn.activities ?? [],
+    note: checkIn.note ?? '',
+  };
 }
 
 function isObject(value) {

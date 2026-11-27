@@ -8,6 +8,7 @@ import {
   countEmotions,
   isNeutralMood,
   medianMoodOn,
+  moodByActivity,
   periodsEnding,
   timeframeDayCount,
 } from './insights.js';
@@ -44,6 +45,7 @@ export default function Patterns({ data, today, onSelect }) {
   const activeHabits = habits.filter((habit) => !habit.archived);
   const comparisons = compareMoodByHabit(days, habits, periods[0][0]);
   const emotions = countEmotions(days, data.emotions, today, dayCount);
+  const activities = moodByActivity(days, data.activities, today, dayCount);
   const hasAnything = Object.keys(days).length > 0;
   const tickEvery = Math.ceil(periods.length / TICKS_SHOWN);
 
@@ -112,6 +114,23 @@ export default function Patterns({ data, today, onSelect }) {
                 </span>
               ))}
             </div>
+          )}
+
+          <h3>Mood and activities</h3>
+          {activities.length === 0 ? (
+            <p className="empty">No activities picked in check-ins yet.</p>
+          ) : (
+            <>
+              <p className="subheading">Average mood of the check-ins you picked each activity in.</p>
+              <div className="chips">
+                {activities.map(({ activity, count, averageMood }) => (
+                  <span key={activity.id} className="chip static">
+                    <span className={`mood-dot mood-${Math.round(averageMood)}`} />
+                    {activity.name} <span className="count">{averageMood.toFixed(1)} · {count}×</span>
+                  </span>
+                ))}
+              </div>
+            </>
           )}
         </>
       )}

@@ -103,6 +103,21 @@ export function countEmotions(days, emotions, today, dayCount) {
     .sort((a, b) => b.count - a.count);
 }
 
+// For each activity picked in check-ins over the `dayCount` days ending `today`: how often,
+// and the average mood of those check-ins. Most picked first.
+export function moodByActivity(days, activities, today, dayCount) {
+  const moodsByActivityId = new Map();
+  for (let i = 0; i < dayCount; i++) {
+    for (const checkIn of days[addDays(today, -i)]?.checkIns ?? []) {
+      for (const activityId of checkIn.activities) moodsByActivityId.set(activityId, [...(moodsByActivityId.get(activityId) ?? []), checkIn.mood]);
+    }
+  }
+  return activities
+    .filter((activity) => moodsByActivityId.has(activity.id))
+    .map((activity) => ({ activity, count: moodsByActivityId.get(activity.id).length, averageMood: mean(moodsByActivityId.get(activity.id)) }))
+    .sort((a, b) => b.count - a.count);
+}
+
 // The average mood across all check-ins over the `dayCount` days ending `today`, or null.
 export function averageMoodOver(days, today, dayCount) {
   const moods = [];

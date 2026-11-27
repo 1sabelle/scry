@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_EMOTIONS } from './days.js';
+import { DEFAULT_ACTIVITIES, DEFAULT_EMOTIONS } from './days.js';
 import { parseData } from './storage.js';
 
 const habit = { id: 'h1', name: 'Walk', archived: false };
@@ -18,8 +18,9 @@ describe('parseData', () => {
     expect(errors).toEqual([]);
     expect(data.habits).toEqual([habit]);
     expect(data.dayStartTime).toBe('00:00');
+    expect(data.activities).toEqual(DEFAULT_ACTIVITIES);
     expect(data.days['2026-11-20']).toEqual({
-      checkIns: [{ id: 'c1', time: '08:30', mood: 4, emotions: [], note: '' }],
+      checkIns: [{ id: 'c1', time: '08:30', mood: 4, emotions: [], activities: [], note: '' }],
       habitsDone: ['h1'],
       gratitude: '',
       success: '',
@@ -39,6 +40,7 @@ describe('parseData', () => {
     expect(data).toEqual({
       habits: [habit],
       emotions: DEFAULT_EMOTIONS,
+      activities: DEFAULT_ACTIVITIES,
       dayStartTime: '00:00',
       days: { '2026-11-20': { checkIns: [], habitsDone: ['h1'], gratitude: '', success: '' } },
     });
@@ -86,16 +88,19 @@ describe('parseData', () => {
     expect(data.days['2026-11-20'].checkIns.map((checkIn) => checkIn.id)).toEqual(['c1']);
   });
 
-  it('keeps a day that only has a gratitude, and checks the start of day', () => {
+  it('keeps a day that only has a gratitude, and checks activities and the start of day', () => {
     const { data, errors } = parseData({
       dayStartTime: '4am',
+      activities: [{ id: 'a1', name: 'climbing' }],
       days: {
         '2026-11-20': { gratitude: 'Sunshine', success: 7 },
+        '2026-11-21': { checkIns: [{ id: 'c1', time: '08:00', mood: 3, activities: ['a1', 'work'] }] },
       },
     });
     expect(errors).toEqual([
       'dayStartTime: "4am" is not a time in HH:MM format, so the day starts at 00:00.',
       '2026-11-20: success "7" is not text.',
+      '2026-11-21 checkIns[0]: activity "work" is not the id of an activity.',
     ]);
     expect(data.dayStartTime).toBe('00:00');
     expect(data.days).toEqual({ '2026-11-20': { checkIns: [], habitsDone: [], gratitude: 'Sunshine', success: '' } });

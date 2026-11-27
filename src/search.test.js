@@ -4,13 +4,13 @@ import { searchWriting } from './search.js';
 describe('searchWriting', () => {
   const days = {
     '2026-11-25': {
-      checkIns: [{ id: 'c1', time: '09:00', mood: 3, emotions: [], note: 'Coffee with Sam' }],
+      checkIns: [{ id: 'c1', time: '09:00', mood: 3, emotions: [], activities: [], note: 'Coffee with Sam' }],
       habitsDone: [],
       gratitude: 'Good coffee',
       success: '',
     },
     '2026-11-26': {
-      checkIns: [{ id: 'c2', time: '20:00', mood: 4, emotions: [], note: 'Quiet evening' }],
+      checkIns: [{ id: 'c2', time: '20:00', mood: 4, emotions: [], activities: [], note: 'Quiet evening' }],
       habitsDone: [],
       gratitude: '',
       success: 'Skipped the coffee',

@@ -6,6 +6,7 @@ import {
   countEmotions,
   isNeutralMood,
   medianMoodOn,
+  moodByActivity,
   periodsEnding,
   streakEnding,
   timeframeDayCount,
@@ -13,8 +14,8 @@ import {
 
 const walk = { id: 'walk', name: 'Walk', archived: false };
 
-function day(mood, habitsDone = [], emotions = []) {
-  return { checkIns: [{ id: `c${mood}`, time: '12:00', mood, emotions, note: '' }], habitsDone, gratitude: '', success: '' };
+function day(mood, habitsDone = [], emotions = [], activities = []) {
+  return { checkIns: [{ id: `c${mood}`, time: '12:00', mood, emotions, activities, note: '' }], habitsDone, gratitude: '', success: '' };
 }
 
 describe('compareMoodByHabit', () => {
@@ -128,5 +129,22 @@ describe('streakEnding', () => {
 
   it('is zero after a missed yesterday', () => {
     expect(streakEnding(days, '2026-11-27', checkedIn)).toBe(0);
+  });
+});
+
+describe('moodByActivity', () => {
+  it('averages the mood of check-ins with each activity, most picked first', () => {
+    const work = { id: 'work', name: 'work', archived: false };
+    const friends = { id: 'friends', name: 'friends', archived: false };
+    const reading = { id: 'reading', name: 'reading', archived: false };
+    const days = {
+      '2026-11-26': day(4, [], [], ['work', 'friends']),
+      '2026-11-25': day(2, [], [], ['work']),
+      '2026-11-01': day(1, [], [], ['reading']),
+    };
+    expect(moodByActivity(days, [work, friends, reading], '2026-11-26', 7)).toEqual([
+      { activity: work, count: 2, averageMood: 3 },
+      { activity: friends, count: 1, averageMood: 4 },
+    ]);
   });
 });

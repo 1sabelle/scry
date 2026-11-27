@@ -6,17 +6,17 @@ import { formatLong, nowTime } from './dates.js';
 const PAST_DAY_TIME = '12:00';
 
 function blankCheckIn(isToday) {
-  return { id: null, time: isToday ? nowTime() : PAST_DAY_TIME, mood: null, emotions: [], note: '' };
+  return { id: null, time: isToday ? nowTime() : PAST_DAY_TIME, mood: null, emotions: [], activities: [], note: '' };
 }
 
-// Emotions are added and edited under Settings.
-export default function CheckIns({ date, isToday, checkIns, emotions, dayStartTime, onChange }) {
+// Emotions and activities are added and edited under Settings.
+export default function CheckIns({ date, isToday, checkIns, emotions, activities, dayStartTime, onChange }) {
   const [draft, setDraft] = useState(() => blankCheckIn(isToday));
   const isEditing = draft.id !== null;
   const update = (change) => setDraft({ ...draft, ...change });
   const hasUnsavedChanges = isEditing
     ? JSON.stringify(draft) !== JSON.stringify(checkIns.find((checkIn) => checkIn.id === draft.id))
-    : draft.mood !== null || draft.emotions.length > 0 || draft.note.trim() !== '';
+    : draft.mood !== null || draft.emotions.length > 0 || draft.activities.length > 0 || draft.note.trim() !== '';
 
   // The browser asks before closing or reloading the page while a check-in is half written.
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function CheckIns({ date, isToday, checkIns, emotions, dayStartTi
                 <span className="entry-time">{checkIn.time}</span>
                 <span className={`mood-dot mood-${checkIn.mood}`} />
                 <span className="check-in-mood">{moodLabel(checkIn.mood)}</span>
-                <EmotionNames checkIn={checkIn} emotions={emotions} />
+                <PickedNames checkIn={checkIn} emotions={emotions} activities={activities} />
                 {checkIn.note && <span className="check-in-note">{checkIn.note}</span>}
               </button>
               <button className="remove" onClick={() => remove(checkIn.id)} aria-label={`Delete the ${checkIn.time} check-in`}>×</button>
@@ -77,6 +77,7 @@ export default function CheckIns({ date, isToday, checkIns, emotions, dayStartTi
       </fieldset>
 
       <OptionPicker title="Emotions" options={emotions} pickedIds={draft.emotions} onChange={(ids) => update({ emotions: ids })} />
+      <OptionPicker title="Activities" options={activities} pickedIds={draft.activities} onChange={(ids) => update({ activities: ids })} />
 
       <textarea rows={2} placeholder="A note about this moment (optional)" value={draft.note} onChange={(e) => update({ note: e.target.value })} />
       <div className="form-actions">
@@ -89,14 +90,15 @@ export default function CheckIns({ date, isToday, checkIns, emotions, dayStartTi
   );
 }
 
-// The names of the emotions a check-in picked: "tired, calm".
-function EmotionNames({ checkIn, emotions }) {
-  if (checkIn.emotions.length === 0) return null;
-  const names = checkIn.emotions.map((id) => emotions.find((emotion) => emotion.id === id)?.name);
-  return <span className="check-in-emotions">{names.join(', ')}</span>;
+// The emotions a check-in picked, then its activities: "tired, calm · work".
+function PickedNames({ checkIn, emotions, activities }) {
+  const namesOf = (pickedIds, options) => pickedIds.map((id) => options.find((option) => option.id === id)?.name);
+  const groups = [namesOf(checkIn.emotions, emotions), namesOf(checkIn.activities, activities)].filter((names) => names.length > 0);
+  if (groups.length === 0) return null;
+  return <span className="check-in-options">{groups.map((names) => names.join(', ')).join(' · ')}</span>;
 }
 
-// Chips to pick emotions. An archived one still shows while it is picked, so editing an old check-in keeps it.
+// Chips to pick emotions or activities. An archived one still shows while it is picked, so editing an old check-in keeps it.
 function OptionPicker({ title, options, pickedIds, onChange }) {
   const pickable = options.filter((option) => !option.archived || pickedIds.includes(option.id));
 

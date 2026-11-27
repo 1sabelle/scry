@@ -53,6 +53,7 @@ export default function App() {
             isToday={selectedDate === today}
             checkIns={selectedDay.checkIns}
             emotions={data.emotions}
+            activities={data.activities}
             dayStartTime={data.dayStartTime}
             onChange={(checkIns) => updateSelectedDay({ checkIns })}
           />

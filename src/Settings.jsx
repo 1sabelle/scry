@@ -4,7 +4,7 @@ import { todayIso } from './dates.js';
 import { parseData } from './storage.js';
 
 // A habit's name may be cleared while typing; one left empty gets this name so it stays valid.
-// Emotions get "Unnamed emotion" the same way.
+// Emotions and activities get "Unnamed emotion" and "Unnamed activity" the same way.
 const UNNAMED_HABIT = 'Unnamed habit';
 
 export default function Settings({ data, onReplace }) {
@@ -13,6 +13,7 @@ export default function Settings({ data, onReplace }) {
       <summary>Settings and data</summary>
       <HabitSettings data={data} onReplace={onReplace} />
       <OptionSettings data={data} onReplace={onReplace} title="Emotions" optionsField="emotions" singular="emotion" />
+      <OptionSettings data={data} onReplace={onReplace} title="Activities" optionsField="activities" singular="activity" />
       <DayStartSettings data={data} onReplace={onReplace} />
       <DataSettings data={data} onReplace={onReplace} />
     </details>
@@ -63,7 +64,7 @@ function HabitSettings({ data, onReplace }) {
   );
 }
 
-// The emotions a check-in can pick, kept in `data[optionsField]` and in each check-in's field of the same name.
+// The emotions or activities a check-in can pick, kept in `data[optionsField]` and in each check-in's field of the same name.
 function OptionSettings({ data, onReplace, title, optionsField, singular }) {
   const [newName, setNewName] = useState('');
   const options = data[optionsField];

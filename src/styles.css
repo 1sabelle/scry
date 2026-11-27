@@ -192,6 +192,9 @@ button.primary:disabled { opacity: 0.8; background: transparent; color: var(--ac
 
 .collapsible > summary, .settings summary { cursor: pointer; font-size: 24px; }
 .collapsible[open] > summary, .settings[open] > summary { margin-bottom: 12px; }
+.search-input { width: 100%; }
+.search-results { margin: 10px 0 0; }
+mark { background: var(--accent); color: var(--on-accent); border-radius: 3px; padding: 0 2px; }
 .subheading { margin: -4px 0 10px; color: var(--muted); font-size: 0.85rem; }
 
 .patterns .readout { margin: 0 0 6px; font-size: 0.85rem; color: var(--muted); min-height: 1.2em; }

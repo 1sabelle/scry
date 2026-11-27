@@ -8,6 +8,7 @@ import CheckIns from './CheckIns.jsx';
 import DailyLines from './DailyLines.jsx';
 import Habits from './Habits.jsx';
 import Patterns from './Patterns.jsx';
+import Search from './Search.jsx';
 import Settings from './Settings.jsx';
 import Starfield from './Starfield.jsx';
 
@@ -66,6 +67,7 @@ export default function App() {
           />
         </section>
       </main>
+      <Search days={data.days} onSelect={setSelectedDate} />
       <Patterns data={data} today={today} onSelect={setSelectedDate} />
       <Settings data={data} onReplace={setData} />
       <footer>Everything stays in this browser. Nothing is sent anywhere.</footer>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MOODS, moodLabel, newId, upsertById } from './days.js';
 import { formatLong, nowTime } from './dates.js';
 
@@ -14,6 +14,17 @@ export default function CheckIns({ date, isToday, checkIns, emotions, dayStartTi
   const [draft, setDraft] = useState(() => blankCheckIn(isToday));
   const isEditing = draft.id !== null;
   const update = (change) => setDraft({ ...draft, ...change });
+  const hasUnsavedChanges = isEditing
+    ? JSON.stringify(draft) !== JSON.stringify(checkIns.find((checkIn) => checkIn.id === draft.id))
+    : draft.mood !== null || draft.emotions.length > 0 || draft.note.trim() !== '';
+
+  // The browser asks before closing or reloading the page while a check-in is half written.
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const warn = (event) => event.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [hasUnsavedChanges]);
 
   function save() {
     onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }, dayStartTime));

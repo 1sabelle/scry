@@ -68,6 +68,7 @@ function HabitSettings({ data, onReplace }) {
 function OptionSettings({ data, onReplace, title, optionsField, singular }) {
   const [newName, setNewName] = useState('');
   const options = data[optionsField];
+  const pickedCounts = countPicks(data.days, optionsField);
   const updateOption = (id, change) =>
     onReplace({ ...data, [optionsField]: options.map((option) => (option.id === id ? { ...option, ...change } : option)) });
 
@@ -80,9 +81,7 @@ function OptionSettings({ data, onReplace, title, optionsField, singular }) {
 
   // Deleting an option also removes it from every check-in it was picked in. Archiving keeps that history.
   function deleteOption(option) {
-    const pickedCount = Object.values(data.days)
-      .flatMap((day) => day.checkIns)
-      .filter((checkIn) => checkIn[optionsField].includes(option.id)).length;
+    const pickedCount = pickedCounts.get(option.id) ?? 0;
     if (!confirm(`Delete "${option.name}" and remove it from ${pickedCount} check-ins? Archive it instead to keep the history.`)) return;
     const days = {};
     for (const [date, day] of Object.entries(data.days))
@@ -107,6 +106,7 @@ function OptionSettings({ data, onReplace, title, optionsField, singular }) {
           />
           <button onClick={() => updateOption(option.id, { archived: !option.archived })}>{option.archived ? 'Restore' : 'Archive'}</button>
           <button onClick={() => deleteOption(option)}>Delete</button>
+          <PickedCount count={pickedCounts.get(option.id) ?? 0} />
         </div>
       ))}
       <form className="add-row" onSubmit={(e) => { e.preventDefault(); addOption(); }}>
@@ -115,6 +115,20 @@ function OptionSettings({ data, onReplace, title, optionsField, singular }) {
       </form>
     </div>
   );
+}
+
+// How many check-ins picked each option, by option id.
+function countPicks(days, optionsField) {
+  const pickedCounts = new Map();
+  for (const day of Object.values(days))
+    for (const checkIn of day.checkIns)
+      for (const id of checkIn[optionsField]) pickedCounts.set(id, (pickedCounts.get(id) ?? 0) + 1);
+  return pickedCounts;
+}
+
+function PickedCount({ count }) {
+  const description = count === 1 ? 'Picked in 1 check-in' : `Picked in ${count} check-ins`;
+  return <span className="picked-count" title={description} aria-label={description}>{count}</span>;
 }
 
 function article(word) {

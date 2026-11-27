@@ -103,7 +103,7 @@ section, .settings, .collapsible {
   gap: 16px;
 }
 .layout .calendar { grid-area: calendar; }
-.layout .check-in-list { grid-area: list; }
+.layout .daily-log { grid-area: list; }
 .layout .day-panel { grid-area: day; }
 @media (max-width: 760px) {
   .layout { grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: 'calendar' 'day' 'list'; }
@@ -188,8 +188,17 @@ button:disabled { opacity: 0.55; cursor: default; }
 button.primary:disabled { opacity: 0.8; background: transparent; color: var(--accent); }
 
 .entry-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 4px; }
-.check-in-list h2 { margin-top: 0; }
-.check-in-list .entry-list { margin: 0; }
+.daily-log h2 { margin-top: 0; }
+.daily-log .entry-list { margin: 0; }
+/* A habit done is a quiet line between the check-ins, aligned with their times. */
+.habit-done { display: grid; border-radius: 8px; }
+.habit-done .entry-body { background: none; color: var(--muted); }
+.habit-done .entry-body:hover, .habit-done.is-open { background: var(--raised); }
+.habit-done-time { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 6px 6px; font-size: 0.8rem; color: var(--muted); }
+.habit-done-time input { padding: 2px 6px; font-size: 0.85rem; }
+.habit-done .habit-check { color: var(--accent); }
+/* A tick saved before times were kept has none; the gap keeps its check in line with the others. */
+.habit-done .entry-time { min-width: 5ch; }
 .check-in { display: grid; gap: 4px; border-radius: 8px; }
 .check-in.is-editing { outline: 1px solid var(--accent); }
 /* A closed check-in is one line; opening it shows everything. */

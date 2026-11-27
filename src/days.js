@@ -2,6 +2,10 @@ import { minutesOfDay } from './dates.js';
 
 // A day holds the mood check-ins, habits done, and one optional gratitude and success logged on that date.
 // Days are stored by ISO date ("2026-11-26"); a day with nothing logged is not stored at all.
+// A habit done is `{ habitId, time }`; ticks saved before their time was kept have time null.
+
+// Check-ins and habits logged on past days default to midday, since the real time is unknown.
+export const PAST_DAY_TIME = '12:00';
 
 export const MOODS = [
   { level: 1, label: 'awful' },
@@ -56,6 +60,10 @@ export function countPicks(days, optionsField) {
   return pickCounts;
 }
 
+export function isHabitDone(day, habitId) {
+  return day?.habitsDone.some((done) => done.habitId === habitId) ?? false;
+}
+
 export function moodLabel(level) {
   return MOODS.find((mood) => mood.level === level)?.label;
 }
@@ -67,12 +75,18 @@ export function averageMood(day) {
   return checkIns.reduce((sum, checkIn) => sum + checkIn.mood, 0) / checkIns.length;
 }
 
-// Replaces the entry with the same id, or adds it; keeps the list in order through a day that
-// starts at `dayStartTime`, so with "04:00" a 01:30 entry comes after the evening's.
+// Replaces the entry with the same id, or adds it, keeping the list in order by time of day.
 export function upsertById(list, entry, dayStartTime) {
   const others = list.filter((existing) => existing.id !== entry.id);
-  const minutesIntoDay = (time) => (minutesOfDay(time) - minutesOfDay(dayStartTime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  return [...others, entry].sort((a, b) => minutesIntoDay(a.time) - minutesIntoDay(b.time));
+  return sortByTimeOfDay([...others, entry], dayStartTime);
+}
+
+// Entries in order through a day that starts at `dayStartTime`, so with "04:00" a 01:30 entry comes after the evening's.
+// Entries without a time come first.
+export function sortByTimeOfDay(entries, dayStartTime) {
+  const minutesIntoDay = (time) =>
+    time === null ? -1 : (minutesOfDay(time) - minutesOfDay(dayStartTime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return [...entries].sort((a, b) => minutesIntoDay(a.time) - minutesIntoDay(b.time));
 }
 
 const MINUTES_PER_DAY = 24 * 60;

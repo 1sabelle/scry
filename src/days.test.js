@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countPicks, findOptionByName, normaliseOptionName, upsertById } from './days.js';
+import { countPicks, findOptionByName, normaliseOptionName, sortByTimeOfDay, upsertById } from './days.js';
 
 describe('upsertById', () => {
   it('orders entries through a day that starts after midnight', () => {
@@ -35,5 +35,12 @@ describe('countPicks', () => {
     const checkIn = (emotions) => ({ emotions, activities: [] });
     const days = { '2026-11-01': { checkIns: [checkIn(['a', 'b']), checkIn(['a'])] }, '2026-11-02': { checkIns: [checkIn(['a'])] } };
     expect(countPicks(days, 'emotions')).toEqual(new Map([['a', 3], ['b', 1]]));
+  });
+});
+
+describe('sortByTimeOfDay', () => {
+  it('puts entries without a time first', () => {
+    const entries = [{ time: '09:00' }, { time: null }, { time: '08:00' }];
+    expect(sortByTimeOfDay(entries, '00:00').map((entry) => entry.time)).toEqual([null, '08:00', '09:00']);
   });
 });

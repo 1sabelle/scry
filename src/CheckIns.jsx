@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { MOODS, countPicks, findOptionByName, moodLabel, newId, normaliseOptionName, upsertById } from './days.js';
+import { MOODS, PAST_DAY_TIME, countPicks, findOptionByName, moodLabel, newId, normaliseOptionName, sortByTimeOfDay, upsertById } from './days.js';
 import { formatLong, nowTime } from './dates.js';
-
-// Check-ins on past days default to midday, since the real time is unknown.
-const PAST_DAY_TIME = '12:00';
 
 const NO_ADDED_OPTIONS = { emotions: [], activities: [] };
 
+// A new check-in today has time null until its time is changed: it is then saved at the time it is checked in,
+// so it lands after anything logged while it was being written.
 function blankCheckIn(isToday) {
-  return { id: null, time: isToday ? nowTime() : PAST_DAY_TIME, mood: null, emotions: [], activities: [], note: '' };
+  return { id: null, time: isToday ? null : PAST_DAY_TIME, mood: null, emotions: [], activities: [], note: '' };
 }
 
 function blankDraft(date, isToday) {
@@ -58,7 +57,7 @@ export function useCheckInDraft(date, isToday, checkIns, dayStartTime, onChange)
       });
     },
     save() {
-      onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }, dayStartTime), addedOptions);
+      onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), time: draft.time ?? nowTime(), note: draft.note.trim() }, dayStartTime), addedOptions);
       setDrafted(blankDraft(date, isToday));
     },
     remove(id) {
@@ -68,19 +67,40 @@ export function useCheckInDraft(date, isToday, checkIns, dayStartTime, onChange)
   };
 }
 
-// One compact line per check-in; opening one shows its whole note and lets it be edited or deleted.
-export function CheckInList({ checkIns, emotions, activities, checkInDraft }) {
+// The day's check-ins and habits done, in order by time. A check-in is one compact line; opening it shows its whole note
+// and lets it be edited or deleted. Opening a habit done lets its time be changed; it is unticked under Habits.
+export function DailyLog({ day, habits, emotions, activities, dayStartTime, checkInDraft, onHabitsDoneChange }) {
   const [openIds, setOpenIds] = useState([]);
   const toggle = (id) => setOpenIds(openIds.includes(id) ? openIds.filter((openId) => openId !== id) : [...openIds, id]);
+  const habitsDone = day.habitsDone.flatMap((done) => {
+    const habit = habits.find((candidate) => candidate.id === done.habitId);
+    return habit ? [{ ...done, habit }] : [];
+  });
+  const entries = sortByTimeOfDay([...day.checkIns, ...habitsDone], dayStartTime);
+  const changeHabitTime = (habitId, time) =>
+    onHabitsDoneChange(day.habitsDone.map((done) => (done.habitId === habitId ? { ...done, time } : done)));
 
   return (
-    <section className="check-in-list">
-      <h2>Check-ins</h2>
-      {checkIns.length === 0 ? (
-        <p className="empty">No check-ins on this day yet.</p>
+    <section className="daily-log">
+      <h2>Daily log</h2>
+      {entries.length === 0 ? (
+        <p className="empty">Nothing logged on this day yet.</p>
       ) : (
         <ul className="entry-list">
-          {checkIns.map((checkIn) => {
+          {entries.map((entry) => {
+            if (entry.habit) {
+              const openId = `habit-${entry.habitId}`;
+              return (
+                <HabitDoneEntry
+                  key={openId}
+                  done={entry}
+                  isOpen={openIds.includes(openId)}
+                  onToggle={() => toggle(openId)}
+                  onTimeChange={(time) => changeHabitTime(entry.habitId, time)}
+                />
+              );
+            }
+            const checkIn = entry;
             const isOpen = openIds.includes(checkIn.id);
             const isEditing = checkIn.id === checkInDraft.draft.id;
             return (
@@ -117,7 +137,7 @@ export function CheckInForm({ date, days, emotions, activities, checkInDraft }) 
       <fieldset>
         <legend>
           {isEditing ? `Edit the ${draft.time} check-in` : 'How are you feeling?'}
-          <input type="time" className="time-input" value={draft.time} onChange={(e) => e.target.value && update({ time: e.target.value })} aria-label="Time" />
+          <input type="time" className="time-input" value={draft.time ?? nowTime()} onChange={(e) => e.target.value && update({ time: e.target.value })} aria-label="Time" />
         </legend>
         <div className="chips">
           {MOODS.map((mood) => (
@@ -161,6 +181,24 @@ export function CheckInForm({ date, days, emotions, activities, checkInDraft }) 
         {isEditing && <button onClick={cancel}>Cancel</button>}
       </div>
     </div>
+  );
+}
+
+function HabitDoneEntry({ done, isOpen, onToggle, onTimeChange }) {
+  return (
+    <li className={`habit-done ${isOpen ? 'is-open' : ''}`}>
+      <button className="entry-body" onClick={onToggle} aria-expanded={isOpen}>
+        <span className="entry-time">{done.time}</span>
+        <span className="habit-check" aria-hidden="true">✓</span>
+        <span>{done.habit.name}</span>
+      </button>
+      {isOpen && (
+        <label className="habit-done-time">
+          Done at
+          <input type="time" value={done.time ?? ''} onChange={(e) => e.target.value && onTimeChange(e.target.value)} />
+        </label>
+      )}
+    </li>
   );
 }
 

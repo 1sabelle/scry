@@ -1,5 +1,5 @@
 import { addDays, daysBetween } from './dates.js';
-import { EMPTY_DAY, averageMood } from './days.js';
+import { EMPTY_DAY, averageMood, isHabitDone } from './days.js';
 
 // Fewer days than this on either side and a mood comparison says more about chance than the habit.
 export const MIN_DAYS_TO_COMPARE = 3;
@@ -68,13 +68,13 @@ export function compareMoodByHabit(days, habits, since) {
   return habits
     .filter((habit) => !habit.archived)
     .map((habit) => {
-      const firstDoneOn = datesWithMood.find((date) => days[date].habitsDone.includes(habit.id));
+      const firstDoneOn = datesWithMood.find((date) => isHabitDone(days[date], habit.id));
       const comparedDates = firstDoneOn ? datesWithMood.filter((date) => date >= firstDoneOn) : [];
       const doneMoods = [];
       const skippedMoods = [];
       for (const date of comparedDates) {
         const mood = averageMood(days[date]);
-        if (days[date].habitsDone.includes(habit.id)) doneMoods.push(mood);
+        if (isHabitDone(days[date], habit.id)) doneMoods.push(mood);
         else skippedMoods.push(mood);
       }
       const hasEnoughDays = doneMoods.length >= MIN_DAYS_TO_COMPARE && skippedMoods.length >= MIN_DAYS_TO_COMPARE;

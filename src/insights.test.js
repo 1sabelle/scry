@@ -15,7 +15,7 @@ import {
 const walk = { id: 'walk', name: 'Walk', archived: false };
 
 function day(mood, habitsDone = [], emotions = [], activities = []) {
-  return { checkIns: [{ id: `c${mood}`, time: '12:00', mood, emotions, activities, note: '' }], habitsDone, gratitude: '', success: '' };
+  return { checkIns: [{ id: `c${mood}`, time: '12:00', mood, emotions, activities, note: '' }], habitsDone: habitsDone.map((habitId) => ({ habitId, time: '12:00' })), gratitude: '', success: '' };
 }
 
 describe('compareMoodByHabit', () => {

@@ -1,4 +1,4 @@
-import { averageMood, moodLabel } from './days.js';
+import { averageMood, isHabitDone, moodLabel } from './days.js';
 import { averageMoodOver, streakEnding } from './insights.js';
 
 // Streak lengths worth looking forward to; within a few days of one, the summary says so.
@@ -27,7 +27,7 @@ export default function Summary({ data, today }) {
   const todayMood = averageMood(todayLog);
   const weekMood = averageMoodOver(data.days, today, 7);
   const activeHabits = data.habits.filter((habit) => !habit.archived);
-  const habitsDoneToday = activeHabits.filter((habit) => todayLog?.habitsDone.includes(habit.id)).length;
+  const habitsDoneToday = activeHabits.filter((habit) => isHabitDone(todayLog, habit.id)).length;
   const checkInCount = todayLog?.checkIns.length ?? 0;
   const checkInStreak = streakEnding(data.days, today, (day) => day.checkIns.length > 0);
 

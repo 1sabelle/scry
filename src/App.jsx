@@ -4,7 +4,7 @@ import { todayIso } from './dates.js';
 import { loadData, saveData } from './storage.js';
 import Summary from './Summary.jsx';
 import Calendar from './Calendar.jsx';
-import { CheckInForm, CheckInList, useCheckInDraft } from './CheckIns.jsx';
+import { CheckInForm, DailyLog, useCheckInDraft } from './CheckIns.jsx';
 import DailyLines from './DailyLines.jsx';
 import Habits from './Habits.jsx';
 import Patterns from './Patterns.jsx';
@@ -56,7 +56,15 @@ export default function App() {
       <Search days={data.days} onSelect={setSelectedDate} />
       <main className="layout">
         <Calendar days={data.days} today={today} selectedDate={selectedDate} onSelect={setSelectedDate} />
-        <CheckInList checkIns={selectedDay.checkIns} emotions={data.emotions} activities={data.activities} checkInDraft={checkInDraft} />
+        <DailyLog
+          day={selectedDay}
+          habits={data.habits}
+          emotions={data.emotions}
+          activities={data.activities}
+          dayStartTime={data.dayStartTime}
+          checkInDraft={checkInDraft}
+          onHabitsDoneChange={(habitsDone) => updateSelectedDay({ habitsDone })}
+        />
         <section className="day-panel">
           <CheckInForm date={selectedDate} days={data.days} emotions={data.emotions} activities={data.activities} checkInDraft={checkInDraft} />
           <DailyLines day={selectedDay} onChange={updateSelectedDay} />
@@ -65,7 +73,7 @@ export default function App() {
             days={data.days}
             today={today}
             isToday={isToday}
-            habitsDone={selectedDay.habitsDone}
+            day={selectedDay}
             onChange={(habitsDone) => updateSelectedDay({ habitsDone })}
           />
         </section>

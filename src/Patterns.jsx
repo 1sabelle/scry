@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { moodLabel } from './days.js';
+import { isHabitDone, moodLabel } from './days.js';
 import { formatShort } from './dates.js';
 import {
   MIN_DAYS_TO_COMPARE,
@@ -167,7 +167,7 @@ function HabitRow({ habit, periods, days, onHover, onSelect }) {
     <>
       <span className="pattern-label">{habit.name}</span>
       {periods.map((dates) => {
-        const doneDayCount = dates.filter((date) => days[date]?.habitsDone.includes(habit.id)).length;
+        const doneDayCount = dates.filter((date) => isHabitDone(days[date], habit.id)).length;
         const doneText = dates.length === 1
           ? (doneDayCount === 1 ? 'done' : 'not done')
           : `done ${doneDayCount} of ${dates.length} days`;

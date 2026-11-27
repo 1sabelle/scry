@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { countPicks, findOptionByName, newId, normaliseOptionName } from './days.js';
+import { countPicks, findOptionByName, isHabitDone, newId, normaliseOptionName } from './days.js';
 import { todayIso } from './dates.js';
 import { parseData } from './storage.js';
 
@@ -34,10 +34,10 @@ function HabitSettings({ data, onReplace }) {
 
   // Deleting a habit also removes it from every day it was ticked off. Archiving keeps that history.
   function deleteHabit(habit) {
-    const doneDayCount = Object.values(data.days).filter((day) => day.habitsDone.includes(habit.id)).length;
+    const doneDayCount = Object.values(data.days).filter((day) => isHabitDone(day, habit.id)).length;
     if (!confirm(`Delete "${habit.name}" and its ${doneDayCount} logged days? Archive it instead to keep the history.`)) return;
     const days = {};
-    for (const [date, day] of Object.entries(data.days)) days[date] = { ...day, habitsDone: day.habitsDone.filter((id) => id !== habit.id) };
+    for (const [date, day] of Object.entries(data.days)) days[date] = { ...day, habitsDone: day.habitsDone.filter((done) => done.habitId !== habit.id) };
     onReplace({ ...data, habits: data.habits.filter((h) => h.id !== habit.id), days });
   }
 

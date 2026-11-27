@@ -21,7 +21,7 @@ describe('parseData', () => {
     expect(data.activities).toEqual(DEFAULT_ACTIVITIES);
     expect(data.days['2026-11-20']).toEqual({
       checkIns: [{ id: 'c1', time: '08:30', mood: 4, emotions: [], activities: [], note: '' }],
-      habitsDone: ['h1'],
+      habitsDone: [{ habitId: 'h1', time: null }],
       gratitude: '',
       success: '',
     });
@@ -42,7 +42,7 @@ describe('parseData', () => {
       emotions: DEFAULT_EMOTIONS,
       activities: DEFAULT_ACTIVITIES,
       dayStartTime: '00:00',
-      days: { '2026-11-20': { checkIns: [], habitsDone: ['h1'], gratitude: '', success: '' } },
+      days: { '2026-11-20': { checkIns: [], habitsDone: [{ habitId: 'h1', time: null }], gratitude: '', success: '' } },
     });
   });
 
@@ -56,7 +56,7 @@ describe('parseData', () => {
             { id: 'c1', time: '25:00', mood: 9, emotions: ['smug'] },
             { id: 'c2', time: '09:00', mood: 3 },
           ],
-          habitsDone: ['h1', 'gone'],
+          habitsDone: [{ habitId: 'h1', time: '07:15' }, 'gone', { habitId: 'h1', time: '7am' }],
         },
       },
     });
@@ -66,9 +66,10 @@ describe('parseData', () => {
       '2026-11-20 checkIns[0]: mood "9" is not one of 1, 2, 3, 4, 5.',
       '2026-11-20 checkIns[0]: emotion "smug" is not the id of an emotion.',
       '2026-11-20: habitsDone "gone" is not the id of a habit.',
+      '2026-11-20: habitsDone "h1": time "7am" is not a time in HH:MM format.',
     ]);
     expect(data.days['2026-11-20'].checkIns.map((checkIn) => checkIn.id)).toEqual(['c2']);
-    expect(data.days['2026-11-20'].habitsDone).toEqual(['h1']);
+    expect(data.days['2026-11-20'].habitsDone).toEqual([{ habitId: 'h1', time: '07:15' }]);
   });
 
   it('gives data saved before emotions were editable the default emotions', () => {

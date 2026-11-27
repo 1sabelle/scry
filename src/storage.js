@@ -146,13 +146,28 @@ function parseDay(date, day, habitIds, optionIds, errors) {
   );
   const habitsDone = [];
   if (day.habitsDone !== undefined && !Array.isArray(day.habitsDone)) errors.push(`${date}: habitsDone "${day.habitsDone}" is not a list.`);
-  for (const habitId of Array.isArray(day.habitsDone) ? day.habitsDone : []) {
-    if (habitIds.has(habitId)) habitsDone.push(habitId);
-    else errors.push(`${date}: habitsDone "${habitId}" is not the id of a habit.`);
+  for (const savedDone of Array.isArray(day.habitsDone) ? day.habitsDone : []) {
+    const done = parseHabitDone(savedDone, `${date}: habitsDone`, habitIds, errors);
+    if (done) habitsDone.push(done);
   }
   const gratitude = parseOptionalText(day.gratitude, `${date}: gratitude`, errors);
   const success = parseOptionalText(day.success, `${date}: success`, errors);
   return { checkIns, habitsDone, gratitude, success };
+}
+
+// Data saved before a habit's tick kept its time holds just the habit's id; those ticks get time null.
+function parseHabitDone(savedDone, where, habitIds, errors) {
+  const done = typeof savedDone === 'string' ? { habitId: savedDone, time: null } : savedDone;
+  if (!isObject(done)) {
+    errors.push(`${where}: expected a habit's id or { habitId, time }, got "${JSON.stringify(savedDone)}".`);
+    return null;
+  }
+  const time = done.time ?? null;
+  const entryErrors = [];
+  if (!habitIds.has(done.habitId)) entryErrors.push(`${where} "${done.habitId}" is not the id of a habit.`);
+  if (time !== null && !TIME_PATTERN.test(time)) entryErrors.push(`${where} "${done.habitId}": time "${time}" is not a time in HH:MM format.`);
+  errors.push(...entryErrors);
+  return entryErrors.length === 0 ? { habitId: done.habitId, time } : null;
 }
 
 function parseOptionalText(text, where, errors) {

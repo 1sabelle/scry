@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { TIMEFRAMES, averageMoodOn, averageMoodOver, compareMoodByHabit, countEmotions, periodsEnding, timeframeDayCount } from './insights.js';
+import {
+  TIMEFRAMES,
+  averageMoodOn,
+  averageMoodOver,
+  compareMoodByHabit,
+  countEmotions,
+  periodsEnding,
+  streakEnding,
+  timeframeDayCount,
+} from './insights.js';
 
 const walk = { id: 'walk', name: 'Walk', archived: false };
 
@@ -96,5 +105,22 @@ describe('countEmotions and averageMoodOver', () => {
   it('averages mood within the window', () => {
     expect(averageMoodOver(days, '2026-11-26', 7)).toBe(3);
     expect(averageMoodOver({}, '2026-11-26', 7)).toBeNull();
+  });
+});
+
+describe('streakEnding', () => {
+  const checkedIn = (logged) => logged.checkIns.length > 0;
+  const days = { '2026-11-23': day(3), '2026-11-24': day(3), '2026-11-25': day(3) };
+
+  it('counts back from yesterday while today is not done yet', () => {
+    expect(streakEnding(days, '2026-11-26', checkedIn)).toBe(3);
+  });
+
+  it('includes today once it is done', () => {
+    expect(streakEnding({ ...days, '2026-11-26': day(3) }, '2026-11-26', checkedIn)).toBe(4);
+  });
+
+  it('is zero after a missed yesterday', () => {
+    expect(streakEnding(days, '2026-11-27', checkedIn)).toBe(0);
   });
 });

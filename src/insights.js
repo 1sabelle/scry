@@ -1,5 +1,5 @@
 import { addDays, daysBetween } from './dates.js';
-import { averageMood } from './days.js';
+import { EMPTY_DAY, averageMood } from './days.js';
 
 // Fewer days than this on either side and a mood comparison says more about chance than the habit.
 export const MIN_DAYS_TO_COMPARE = 3;
@@ -37,6 +37,18 @@ export function periodsEnding(today, dayCount) {
 // The average mood across all check-ins on the given dates, or null.
 export function averageMoodOn(days, dates) {
   return mean(dates.flatMap((date) => (days[date]?.checkIns ?? []).map((checkIn) => checkIn.mood)));
+}
+
+// How many days in a row, ending today, `isKept(day)` holds for. A today that isn't kept yet
+// doesn't break the streak: it counts back from yesterday until the day is over.
+export function streakEnding(days, today, isKept) {
+  let date = isKept(days[today] ?? EMPTY_DAY) ? today : addDays(today, -1);
+  let streak = 0;
+  while (isKept(days[date] ?? EMPTY_DAY)) {
+    streak++;
+    date = addDays(date, -1);
+  }
+  return streak;
 }
 
 // For each active habit: the average mood on days it was done versus days it was not.

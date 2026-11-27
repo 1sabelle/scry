@@ -56,6 +56,9 @@ export default function App() {
           />
           <Habits
             habits={data.habits}
+            days={data.days}
+            today={today}
+            isToday={selectedDate === today}
             habitsDone={selectedDay.habitsDone}
             onChange={(habitsDone) => updateSelectedDay({ habitsDone })}
           />

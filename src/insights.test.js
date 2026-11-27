@@ -3,6 +3,7 @@ import {
   TIMEFRAMES,
   averageMoodOver,
   compareMoodByHabit,
+  habitFrequency,
   countEmotions,
   isNeutralMood,
   medianMoodOn,
@@ -146,5 +147,17 @@ describe('moodByActivity', () => {
       { activity: work, count: 2, averageMood: 3 },
       { activity: friends, count: 1, averageMood: 4 },
     ]);
+  });
+});
+
+describe('habitFrequency', () => {
+  const days = { '2026-10-30': day(3, ['walk']), '2026-11-01': day(3, ['walk']), '2026-11-02': day(3), '2026-11-03': day(3, ['walk']) };
+
+  it('shares the days done since the first day done, and counts the days done this month', () => {
+    expect(habitFrequency(days, 'walk', '2026-11-03')).toEqual({ firstDoneDate: '2026-10-30', shareOfDaysDone: 3 / 5, doneDaysThisMonth: 2 });
+  });
+
+  it('has no share for a habit never done', () => {
+    expect(habitFrequency(days, 'read', '2026-11-03')).toEqual({ firstDoneDate: null, shareOfDaysDone: null, doneDaysThisMonth: 0 });
   });
 });

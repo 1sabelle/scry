@@ -157,6 +157,15 @@ legend { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; lett
 .daily-line { display: grid; gap: 4px; }
 .daily-line-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .daily-line input { width: 100%; }
+.habit-list { display: grid; gap: 4px; }
+.habit-row {
+  display: flex; align-items: center; gap: 8px; text-align: left;
+  background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
+}
+.habit-row:hover { background: var(--hover); }
+.habit-row.on { border-color: var(--accent); }
+.habit-row.on .habit-check { color: var(--accent); }
+.habit-stats { margin-left: auto; color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .habit-check { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1px solid currentColor; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
 
 textarea, input:not([type='file']), select {

@@ -63,6 +63,20 @@ export function streakEnding(days, today, isKept) {
 // For each active habit: the average mood on days it was done versus days it was not.
 // Only days with a check-in from `since` on count, starting from the first day the habit
 // was done, so days before you started a habit don't count against it.
+// How often a habit is done: the share of days it was done since the first day it was, up to today,
+// and how many days of today's month it was done. A habit never done has no share.
+export function habitFrequency(days, habitId, today) {
+  const doneDates = Object.keys(days).filter((date) => date <= today && isHabitDone(days[date], habitId));
+  if (doneDates.length === 0) return { firstDoneDate: null, shareOfDaysDone: null, doneDaysThisMonth: 0 };
+  const firstDoneDate = doneDates.reduce((earliest, date) => (date < earliest ? date : earliest));
+  const thisMonth = today.slice(0, 7);
+  return {
+    firstDoneDate,
+    shareOfDaysDone: doneDates.length / (daysBetween(firstDoneDate, today) + 1),
+    doneDaysThisMonth: doneDates.filter((date) => date.startsWith(thisMonth)).length,
+  };
+}
+
 export function compareMoodByHabit(days, habits, since) {
   const datesWithMood = Object.keys(days).filter((date) => date >= since && averageMood(days[date]) !== null).sort();
   return habits

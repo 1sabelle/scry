@@ -13,6 +13,27 @@ import {
   timeframeDayCount,
 } from './insights.js';
 
+// The chosen timeframe is remembered in this browser, apart from the logged data (it is not exported).
+const TIMEFRAME_KEY = 'scry.patterns.timeframe';
+const DEFAULT_TIMEFRAME_ID = '3-months';
+
+function loadTimeframeId() {
+  try {
+    const savedId = localStorage.getItem(TIMEFRAME_KEY);
+    return TIMEFRAMES.some((timeframe) => timeframe.id === savedId) ? savedId : DEFAULT_TIMEFRAME_ID;
+  } catch {
+    return DEFAULT_TIMEFRAME_ID;
+  }
+}
+
+function saveTimeframeId(timeframeId) {
+  try {
+    localStorage.setItem(TIMEFRAME_KEY, timeframeId);
+  } catch {
+    /* it is only a convenience; the default shows next time */
+  }
+}
+
 // Roughly how many date labels fit under the grid.
 const TICKS_SHOWN = 6;
 
@@ -37,7 +58,7 @@ function describePeriod(dates) {
 
 export default function Patterns({ data, today, onSelect }) {
   const [hovered, setHovered] = useState(null);
-  const [timeframeId, setTimeframeId] = useState('3-months');
+  const [timeframeId, setTimeframeId] = useState(loadTimeframeId);
   const { days, habits } = data;
   const timeframe = TIMEFRAMES.find((candidate) => candidate.id === timeframeId);
   const dayCount = timeframeDayCount(timeframe, days, today);
@@ -62,7 +83,10 @@ export default function Patterns({ data, today, onSelect }) {
                 key={candidate.id}
                 className={`chip small ${candidate.id === timeframeId ? 'on' : ''}`}
                 aria-pressed={candidate.id === timeframeId}
-                onClick={() => setTimeframeId(candidate.id)}
+                onClick={() => {
+                  setTimeframeId(candidate.id);
+                  saveTimeframeId(candidate.id);
+                }}
               >
                 {candidate.label}
               </button>

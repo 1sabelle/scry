@@ -186,9 +186,13 @@ button.primary:disabled { opacity: 0.8; background: transparent; color: var(--ac
 .check-in:not(.is-open) .check-in-options,
 .check-in:not(.is-open) .check-in-note { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .check-in:not(.is-open) .check-in-options:has(+ .check-in-note) { flex: 0 1 auto; }
-.check-in-actions { display: flex; gap: 8px; padding: 0 0 4px 10px; }
-.check-in-actions button { border: 1px solid var(--border); border-radius: 8px; padding: 2px 12px; background: var(--raised); font-size: 0.85rem; }
-.check-in-actions button:hover:not(:disabled) { background: var(--hover); }
+/* An open check-in is one card: its actions sit quietly in the bottom right, inside it. */
+.check-in.is-open { background: var(--raised); gap: 0; }
+.check-in.is-open:has(.entry-body:hover) { background: var(--hover); }
+.check-in.is-open .entry-body { background: none; }
+.check-in-actions { display: flex; justify-content: flex-end; gap: 2px; padding: 0 6px 6px; }
+.check-in-actions button { border: none; border-radius: 6px; padding: 2px 10px; background: none; color: var(--muted); font-size: 0.8rem; }
+.check-in-actions button:hover:not(:disabled) { color: var(--text); background: var(--hover); }
 .entry-body {
   flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; text-align: left;
   background: var(--raised); border: none; border-radius: 8px; padding: 6px 10px;

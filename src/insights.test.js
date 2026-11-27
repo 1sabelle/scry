@@ -80,9 +80,11 @@ describe('countEmotions and averageMoodOver', () => {
   };
 
   it('counts emotions within the window, most frequent first', () => {
-    expect(countEmotions(days, '2026-11-26', 7)).toEqual([
-      { emotion: 'tired', count: 2 },
-      { emotion: 'calm', count: 1 },
+    const calm = { id: 'calm', name: 'calm', archived: false };
+    const tired = { id: 'tired', name: 'worn out', archived: true };
+    expect(countEmotions(days, [calm, tired], '2026-11-26', 7)).toEqual([
+      { emotion: tired, count: 2 },
+      { emotion: calm, count: 1 },
     ]);
   });
 

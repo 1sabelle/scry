@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EMOTIONS, MOODS, moodLabel, newId, upsertById } from './days.js';
+import { MOODS, moodLabel, newId, upsertById } from './days.js';
 import { formatLong, nowTime } from './dates.js';
 
 // Check-ins on past days default to midday, since the real time is unknown.
@@ -9,15 +9,11 @@ function blankCheckIn(isToday) {
   return { id: null, time: isToday ? nowTime() : PAST_DAY_TIME, mood: null, emotions: [], note: '' };
 }
 
-export default function CheckIns({ date, isToday, checkIns, onChange }) {
+// Emotions are added and edited under Settings.
+export default function CheckIns({ date, isToday, checkIns, emotions, onChange }) {
   const [draft, setDraft] = useState(() => blankCheckIn(isToday));
   const isEditing = draft.id !== null;
   const update = (change) => setDraft({ ...draft, ...change });
-
-  function toggleEmotion(emotion) {
-    const emotions = draft.emotions.includes(emotion) ? draft.emotions.filter((e) => e !== emotion) : [...draft.emotions, emotion];
-    update({ emotions });
-  }
 
   function save() {
     onChange(upsertById(checkIns, { ...draft, id: draft.id ?? newId(), note: draft.note.trim() }));
@@ -40,7 +36,7 @@ export default function CheckIns({ date, isToday, checkIns, onChange }) {
                 <span className="entry-time">{checkIn.time}</span>
                 <span className={`mood-dot mood-${checkIn.mood}`} />
                 <span className="check-in-mood">{moodLabel(checkIn.mood)}</span>
-                {checkIn.emotions.length > 0 && <span className="check-in-emotions">{checkIn.emotions.join(', ')}</span>}
+                <EmotionNames checkIn={checkIn} emotions={emotions} />
                 {checkIn.note && <span className="check-in-note">{checkIn.note}</span>}
               </button>
               <button className="remove" onClick={() => remove(checkIn.id)} aria-label={`Delete the ${checkIn.time} check-in`}>×</button>
@@ -69,21 +65,7 @@ export default function CheckIns({ date, isToday, checkIns, onChange }) {
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Emotions</legend>
-        <div className="chips">
-          {EMOTIONS.map((emotion) => (
-            <button
-              key={emotion}
-              className={`chip small ${draft.emotions.includes(emotion) ? 'on' : ''}`}
-              aria-pressed={draft.emotions.includes(emotion)}
-              onClick={() => toggleEmotion(emotion)}
-            >
-              {emotion}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <OptionPicker title="Emotions" options={emotions} pickedIds={draft.emotions} onChange={(ids) => update({ emotions: ids })} />
 
       <textarea rows={2} placeholder="A note about this moment (optional)" value={draft.note} onChange={(e) => update({ note: e.target.value })} />
       <div className="form-actions">
@@ -93,5 +75,43 @@ export default function CheckIns({ date, isToday, checkIns, onChange }) {
         {isEditing && <button onClick={() => setDraft(blankCheckIn(isToday))}>Cancel</button>}
       </div>
     </div>
+  );
+}
+
+// The names of the emotions a check-in picked: "tired, calm".
+function EmotionNames({ checkIn, emotions }) {
+  if (checkIn.emotions.length === 0) return null;
+  const names = checkIn.emotions.map((id) => emotions.find((emotion) => emotion.id === id)?.name);
+  return <span className="check-in-emotions">{names.join(', ')}</span>;
+}
+
+// Chips to pick emotions. An archived one still shows while it is picked, so editing an old check-in keeps it.
+function OptionPicker({ title, options, pickedIds, onChange }) {
+  const pickable = options.filter((option) => !option.archived || pickedIds.includes(option.id));
+
+  function toggle(optionId) {
+    onChange(pickedIds.includes(optionId) ? pickedIds.filter((id) => id !== optionId) : [...pickedIds, optionId]);
+  }
+
+  return (
+    <fieldset>
+      <legend>{title}</legend>
+      {pickable.length === 0 ? (
+        <p className="empty">No {title.toLowerCase()} yet. Add some under Settings and data.</p>
+      ) : (
+        <div className="chips">
+          {pickable.map((option) => (
+            <button
+              key={option.id}
+              className={`chip small ${pickedIds.includes(option.id) ? 'on' : ''}`}
+              aria-pressed={pickedIds.includes(option.id)}
+              onClick={() => toggle(option.id)}
+            >
+              {option.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </fieldset>
   );
 }

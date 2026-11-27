@@ -10,10 +10,12 @@ export const MOODS = [
 ];
 export const MOOD_LEVELS = MOODS.map((mood) => mood.level);
 
-export const EMOTIONS = [
+// The emotions offered until the user edits the list. Their names double as ids, which is what
+// check-ins stored before emotions became editable, so those check-ins still point at them.
+export const DEFAULT_EMOTIONS = [
   'calm', 'content', 'grateful', 'hopeful', 'proud', 'excited', 'loved', 'focused',
   'tired', 'bored', 'lonely', 'anxious', 'stressed', 'overwhelmed', 'frustrated', 'sad',
-];
+].map((name) => ({ id: name, name, archived: false }));
 
 export const EMPTY_DAY = { checkIns: [], habitsDone: [] };
 

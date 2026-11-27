@@ -15,7 +15,7 @@ looked in and saw a crown of stars. Tide's sister palette.
 It runs entirely in your browser. No account, no server, no ads, no one
 peeking. Your data never leaves your device unless you export it yourself.
 
-- **Check-ins**: as many per day as you like, each with a mood, emotions and a note
+- **Check-ins**: as many per day as you like, each with a mood, emotions from your own list and a note
 - **Habits**: your own list, ticked off per day; archive one to keep its history
 - **Patterns**: the last 12 weeks at a glance, mood on days with and without each habit, and your most common emotions
 

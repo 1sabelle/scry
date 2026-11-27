@@ -69,14 +69,17 @@ export function compareMoodByHabit(days, habits, since) {
 }
 
 // How often each emotion was picked in check-ins over the `dayCount` days ending `today`, most frequent first.
-export function countEmotions(days, today, dayCount) {
+export function countEmotions(days, emotions, today, dayCount) {
   const counts = new Map();
   for (let i = 0; i < dayCount; i++) {
     for (const checkIn of days[addDays(today, -i)]?.checkIns ?? []) {
-      for (const emotion of checkIn.emotions) counts.set(emotion, (counts.get(emotion) ?? 0) + 1);
+      for (const emotionId of checkIn.emotions) counts.set(emotionId, (counts.get(emotionId) ?? 0) + 1);
     }
   }
-  return [...counts].map(([emotion, count]) => ({ emotion, count })).sort((a, b) => b.count - a.count);
+  return emotions
+    .filter((emotion) => counts.has(emotion.id))
+    .map((emotion) => ({ emotion, count: counts.get(emotion.id) }))
+    .sort((a, b) => b.count - a.count);
 }
 
 // The average mood across all check-ins over the `dayCount` days ending `today`, or null.

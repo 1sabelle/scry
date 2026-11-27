@@ -31,7 +31,7 @@ export default function Patterns({ data, today, onSelect }) {
   const periods = periodsEnding(today, dayCount);
   const activeHabits = habits.filter((habit) => !habit.archived);
   const comparisons = compareMoodByHabit(days, habits, periods[0][0]);
-  const emotions = countEmotions(days, today, dayCount);
+  const emotions = countEmotions(days, data.emotions, today, dayCount);
   const hasAnything = Object.keys(days).length > 0;
   const tickEvery = Math.ceil(periods.length / TICKS_SHOWN);
 
@@ -96,8 +96,8 @@ export default function Patterns({ data, today, onSelect }) {
           ) : (
             <div className="chips">
               {emotions.map(({ emotion, count }) => (
-                <span key={emotion} className="chip static">
-                  {emotion} <span className="count">{count}</span>
+                <span key={emotion.id} className="chip static">
+                  {emotion.name} <span className="count">{count}</span>
                 </span>
               ))}
             </div>

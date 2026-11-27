@@ -50,6 +50,7 @@ export default function App() {
             date={selectedDate}
             isToday={selectedDate === today}
             checkIns={selectedDay.checkIns}
+            emotions={data.emotions}
             onChange={(checkIns) => updateSelectedDay({ checkIns })}
           />
           <Habits

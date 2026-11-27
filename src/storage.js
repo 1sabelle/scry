@@ -1,4 +1,4 @@
-import { EMOTIONS, MOOD_LEVELS, isEmptyDay } from './days.js';
+import { DEFAULT_EMOTIONS, MOOD_LEVELS, isEmptyDay } from './days.js';
 import { isIsoDate } from './dates.js';
 
 const STORAGE_KEY = 'scry.v1';
@@ -7,6 +7,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const EMPTY_DATA = {
   habits: [],
+  emotions: DEFAULT_EMOTIONS,
   days: {},
 };
 
@@ -52,13 +53,20 @@ export function parseData(json) {
   }
   const errors = [];
   const habits = parseList(json.habits, 'habits', errors, collectHabitErrors, normalizeHabit);
+  // Data saved before emotions became editable has none, and starts with the default ones.
+  const emotions = json.emotions === undefined ? DEFAULT_EMOTIONS : parseList(json.emotions, 'emotions', errors, collectOptionErrors, normalizeOption);
   const habitIds = new Set(habits.map((habit) => habit.id));
+  const optionIds = { emotions: idsOf(emotions) };
   const days = {};
   for (const [date, savedDay] of Object.entries(json.days)) {
-    const day = parseDay(date, savedDay, habitIds, errors);
+    const day = parseDay(date, savedDay, habitIds, optionIds, errors);
     if (day && !isEmptyDay(day)) days[date] = day;
   }
-  return { data: { habits, days }, errors };
+  return { data: { habits, emotions, days }, errors };
+}
+
+function idsOf(list) {
+  return new Set(list.map((entry) => entry.id));
 }
 
 function parseList(list, name, errors, collectErrors, normalize) {
@@ -91,8 +99,24 @@ function normalizeHabit(habit) {
   return { id: habit.id, name: habit.name, archived: habit.archived ?? false };
 }
 
+// An option is an emotion a check-in can pick.
+function collectOptionErrors(option, where) {
+  if (!isObject(option)) return [`${where}: expected an object, got "${JSON.stringify(option)}".`];
+  const errors = [];
+  if (!isNonEmptyText(option.id)) errors.push(`${where}: id "${option.id}" is not text.`);
+  // An empty name is allowed: it can be saved mid-edit, while the name is being retyped.
+  if (typeof option.name !== 'string') errors.push(`${where}: name "${option.name}" is not text.`);
+  if (option.archived !== undefined && typeof option.archived !== 'boolean')
+    errors.push(`${where}: archived "${option.archived}" is not true or false.`);
+  return errors;
+}
+
+function normalizeOption(option) {
+  return { id: option.id, name: option.name, archived: option.archived ?? false };
+}
+
 // A day keeps its valid entries; each invalid entry is reported and dropped on its own.
-function parseDay(date, day, habitIds, errors) {
+function parseDay(date, day, habitIds, optionIds, errors) {
   if (!isIsoDate(date)) {
     errors.push(`${date}: "${date}" is not a date in YYYY-MM-DD format.`);
     return null;
@@ -101,7 +125,13 @@ function parseDay(date, day, habitIds, errors) {
     errors.push(`${date}: expected an object, got "${JSON.stringify(day)}".`);
     return null;
   }
-  const checkIns = parseList(day.checkIns, `${date} checkIns`, errors, collectCheckInErrors, normalizeCheckIn);
+  const checkIns = parseList(
+    day.checkIns,
+    `${date} checkIns`,
+    errors,
+    (checkIn, where) => collectCheckInErrors(checkIn, where, optionIds),
+    normalizeCheckIn,
+  );
   const habitsDone = [];
   if (day.habitsDone !== undefined && !Array.isArray(day.habitsDone)) errors.push(`${date}: habitsDone "${day.habitsDone}" is not a list.`);
   for (const habitId of Array.isArray(day.habitsDone) ? day.habitsDone : []) {
@@ -111,20 +141,22 @@ function parseDay(date, day, habitIds, errors) {
   return { checkIns, habitsDone };
 }
 
-function collectCheckInErrors(checkIn, where) {
+function collectCheckInErrors(checkIn, where, optionIds) {
   if (!isObject(checkIn)) return [`${where}: expected an object, got "${JSON.stringify(checkIn)}".`];
   const errors = [];
   if (!isNonEmptyText(checkIn.id)) errors.push(`${where}: id "${checkIn.id}" is not text.`);
   if (!TIME_PATTERN.test(checkIn.time)) errors.push(`${where}: time "${checkIn.time}" is not a time in HH:MM format.`);
   if (!MOOD_LEVELS.includes(checkIn.mood)) errors.push(`${where}: mood "${checkIn.mood}" is not one of ${MOOD_LEVELS.join(', ')}.`);
-  if (checkIn.emotions !== undefined) {
-    if (!Array.isArray(checkIn.emotions)) errors.push(`${where}: emotions "${checkIn.emotions}" is not a list.`);
-    else
-      for (const emotion of checkIn.emotions)
-        if (!EMOTIONS.includes(emotion)) errors.push(`${where}: emotion "${emotion}" is not one of ${EMOTIONS.join(', ')}.`);
-  }
+  errors.push(...collectPickedOptionErrors(checkIn.emotions, optionIds.emotions, 'emotions', 'emotion', where));
   if (checkIn.note !== undefined && typeof checkIn.note !== 'string') errors.push(`${where}: note "${checkIn.note}" is not text.`);
   return errors;
+}
+
+function collectPickedOptionErrors(pickedIds, optionIds, field, singular, where) {
+  if (pickedIds === undefined) return [];
+  if (!Array.isArray(pickedIds)) return [`${where}: ${field} "${pickedIds}" is not a list.`];
+  const article = /^[aeiou]/.test(singular) ? 'an' : 'a';
+  return pickedIds.filter((id) => !optionIds.has(id)).map((id) => `${where}: ${singular} "${id}" is not the id of ${article} ${singular}.`);
 }
 
 function normalizeCheckIn(checkIn) {

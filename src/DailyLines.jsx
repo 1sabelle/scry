@@ -9,7 +9,7 @@ export default function DailyLines({ day, onChange }) {
           <span className="daily-line-label">{line.label}</span>
           <input
             value={day[line.field]}
-            placeholder={`${line.placeholder} (optional)`}
+            placeholder={line.placeholder}
             onChange={(e) => onChange({ [line.field]: e.target.value })}
             onBlur={() => day[line.field] !== day[line.field].trim() && onChange({ [line.field]: day[line.field].trim() })}
           />
